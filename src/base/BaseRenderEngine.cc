@@ -247,6 +247,13 @@ void BaseRenderEngine::AddResourcePath(const std::string &_path)
   this->resourcePaths.push_back(_path);
 }
 
+#ifdef __QNX__
+//////////////////////////////////////////////////
+void BaseRenderEngine::SetDefaultPlatformNativeWindow(void *display, void *surface)
+{
+}
+#endif
+
 //////////////////////////////////////////////////
 void BaseRenderEngine::SetHeadless(bool _headless)
 {

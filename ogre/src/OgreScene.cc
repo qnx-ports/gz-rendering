@@ -54,6 +54,8 @@
 #include "gz/rendering/ogre/OgreWideAngleCamera.hh"
 #include "gz/rendering/ogre/OgreWireBox.hh"
 
+#include <OgreDeprecated.h>
+
 namespace gz
 {
   namespace rendering

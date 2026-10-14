@@ -52,6 +52,11 @@ if (APPLE)
   gz_find_package(OpenGL
     REQUIRED_BY ogre ogre2
     PKGCONFIG gl)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "QNX")
+  gz_find_package(OpenGL REQUIRED
+    COMPONENTS GLES2
+    OPTIONAL_COMPONENTS EGL
+    REQUIRED_BY ogre ogre2)
 else()
   gz_find_package(OpenGL REQUIRED
     COMPONENTS OpenGL
@@ -68,10 +73,16 @@ endif()
 # Find OGRE
 list(APPEND gz_ogre_components "RTShaderSystem" "Terrain" "Overlay" "Paging")
 
-gz_find_package(GzOGRE VERSION 1.9.0
-  COMPONENTS ${gz_ogre_components}
-  REQUIRED_BY ogre
-  PRIVATE_FOR ogre)
+if (CMAKE_SYSTEM_NAME STREQUAL "QNX")
+	# The GzOGRE find module practically hardcodes the version,
+	# so it's stubbed out.
+	set(OGRE_FOUND TRUE)
+else()
+	gz_find_package(GzOGRE VERSION 1.9.0
+		COMPONENTS ${gz_ogre_components}
+		REQUIRED_BY ogre
+		PRIVATE_FOR ogre)
+endif()
 
 # Ogre versions greater than 1.9.x are not officially supported.
 # Display a warning for the users on this setup unless they provide

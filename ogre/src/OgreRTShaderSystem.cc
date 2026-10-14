@@ -421,44 +421,35 @@ void OgreRTShaderSystem::GenerateShaders(OgreSubMesh *subMesh)
             0);
 
       // Remove all sub render states.
-      renderState->reset();
+      renderState->resetToBuiltinSubRenderStates();
 
       if (shaderTypeName == "normal_map_object_space")
       {
-        Ogre::RTShader::SubRenderState* subRenderState =
+        Ogre::RTShader::SubRenderState* normalMapSubRS =
           this->dataPtr->shaderGenerator->createSubRenderState(
-              Ogre::RTShader::NormalMapLighting::Type);
+              Ogre::RTShader::SRS_NORMALMAP);
 
-        Ogre::RTShader::NormalMapLighting* normalMapSubRS =
-          static_cast<Ogre::RTShader::NormalMapLighting*>(subRenderState);
+        normalMapSubRS->setParameter("normalmap_space", "object_space");
 
-        normalMapSubRS->setNormalMapSpace(
-            Ogre::RTShader::NormalMapLighting::NMS_OBJECT);
-
-        normalMapSubRS->setNormalMapTextureName(normalMapName);
+        normalMapSubRS->setParameter("texture_index", normalMapName);
         renderState->addTemplateSubRenderState(normalMapSubRS);
       }
       else if (shaderTypeName == "normal_map_tangent_space")
       {
-        Ogre::RTShader::SubRenderState* subRenderState =
+        Ogre::RTShader::SubRenderState* normalMapSubRS =
           this->dataPtr->shaderGenerator->createSubRenderState(
-              Ogre::RTShader::NormalMapLighting::Type);
+              Ogre::RTShader::SRS_NORMALMAP);
 
-        Ogre::RTShader::NormalMapLighting* normalMapSubRS =
-          static_cast<Ogre::RTShader::NormalMapLighting*>(subRenderState);
+        normalMapSubRS->setParameter("normalmap_space", "tangent_space");
 
-        normalMapSubRS->setNormalMapSpace(
-            Ogre::RTShader::NormalMapLighting::NMS_TANGENT);
-
-        normalMapSubRS->setNormalMapTextureName(normalMapName);
-
+        normalMapSubRS->setParameter("texture_index", normalMapName);
         renderState->addTemplateSubRenderState(normalMapSubRS);
       }
       else if (shaderTypeName == "vertex")
       {
         Ogre::RTShader::SubRenderState *perPerVertexLightModel =
           this->dataPtr->shaderGenerator->createSubRenderState(
-              Ogre::RTShader::FFPLighting::Type);
+              Ogre::RTShader::SRS_PER_VERTEX_LIGHTING);
 
         renderState->addTemplateSubRenderState(perPerVertexLightModel);
       }
@@ -466,7 +457,7 @@ void OgreRTShaderSystem::GenerateShaders(OgreSubMesh *subMesh)
       {
         Ogre::RTShader::SubRenderState *perPixelLightModel =
           this->dataPtr->shaderGenerator->createSubRenderState(
-              Ogre::RTShader::PerPixelLighting::Type);
+              Ogre::RTShader::SRS_PER_PIXEL_LIGHTING);
 
         renderState->addTemplateSubRenderState(perPixelLightModel);
       }
@@ -557,7 +548,7 @@ void OgreRTShaderSystem::RemoveShadows(OgreScenePtr _scene)
         _scene->Name() +
         Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
 
-  schemeRenderState->removeTemplateSubRenderState(
+  schemeRenderState->removeSubRenderState(
       this->dataPtr->shadowRenderState);
 
   this->dataPtr->shaderGenerator->invalidateScheme(_scene->Name() +
@@ -650,22 +641,13 @@ void OgreRTShaderSystem::ApplyShadows(OgreScenePtr _scene)
 
   this->dataPtr->shadowRenderState =
       this->dataPtr->shaderGenerator->createSubRenderState(
-      Ogre::RTShader::IntegratedPSSM3::Type);
-  Ogre::RTShader::IntegratedPSSM3 *pssm3SubRenderState =
-      static_cast<Ogre::RTShader::IntegratedPSSM3 *>(
-      this->dataPtr->shadowRenderState);
+      Ogre::RTShader::SRS_INTEGRATED_PSSM3);
 
   const Ogre::PSSMShadowCameraSetup::SplitPointList &srcSplitPoints =
     cameraSetup->getSplitPoints();
 
-  Ogre::RTShader::IntegratedPSSM3::SplitPointList dstSplitPoints;
+  this->dataPtr->shadowRenderState->setParameter("split_points", srcSplitPoints);
 
-  for (size_t i = 0; i < srcSplitPoints.size(); ++i)
-  {
-    dstSplitPoints.push_back(srcSplitPoints[i]);
-  }
-
-  pssm3SubRenderState->setSplitPoints(dstSplitPoints);
   schemRenderState->addTemplateSubRenderState(this->dataPtr->shadowRenderState);
 
   this->dataPtr->shaderGenerator->invalidateScheme(_scene->Name() +

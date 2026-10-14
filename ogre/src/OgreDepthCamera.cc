@@ -331,7 +331,6 @@ void OgreDepthCamera::Render()
 
   // point cloud xyz and depth
   sceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_NONE);
-  sceneMgr->_suppressRenderStateChanges(true);
 
   this->dataPtr->pcdTexture->SetAutoUpdated(false);
   OgreMaterialPtr ogreMat =
@@ -340,7 +339,6 @@ void OgreDepthCamera::Render()
       ogreMat->Material().get(), ogreMat->Material()->getName());
   this->dataPtr->pcdTexture->RenderTarget()->update(false);
 
-  sceneMgr->_suppressRenderStateChanges(false);
   sceneMgr->setShadowTechnique(shadowTech);
 
   // skip color pass if we do not need to output point clouds
@@ -389,7 +387,7 @@ void OgreDepthCamera::UpdateRenderTarget(OgreRenderTexturePtr _target,
 
   // Need this line to render the ground plane. No idea why it's necessary.
   renderSys->_setViewport(vp);
-  sceneMgr->_setPass(pass, true, false);
+  sceneMgr->_setPass(pass, true);
   autoParamDataSource.setCurrentPass(pass);
   autoParamDataSource.setCurrentViewport(vp);
   autoParamDataSource.setCurrentRenderTarget(target);
@@ -401,7 +399,7 @@ void OgreDepthCamera::UpdateRenderTarget(OgreRenderTexturePtr _target,
 
   // These two lines don't seem to do anything useful
   renderSys->_setProjectionMatrix(
-      this->ogreCamera->getProjectionMatrixRS());
+      this->ogreCamera->getProjectionMatrix());
   renderSys->_setViewMatrix(this->ogreCamera->getViewMatrix(true));
 
   pass->_updateAutoParams(&autoParamDataSource, 1);
