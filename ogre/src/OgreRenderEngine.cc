@@ -602,7 +602,11 @@ void OgreRenderEngine::CreateRenderSystem()
   // (it thinks the while loop is empty), so we must put the whole while
   // statement on one line and add NOLINT at the end so that cpplint doesn't
   // complain about the line being too long
+#ifdef __QNX__
   while (renderSys && renderSys->getName() != "OpenGL Rendering Subsystem"); // NOLINT
+#else
+  while (renderSys && renderSys->getName().find("OpenGL") != Ogre::String::npos); // NOLINT
+#endif
 
   if (renderSys == nullptr)
   {
