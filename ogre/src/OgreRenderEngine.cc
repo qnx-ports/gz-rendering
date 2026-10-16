@@ -121,8 +121,8 @@ RenderEngine *OgreRenderEnginePlugin::Engine() const
 //////////////////////////////////////////////////
 OgreRenderEngine::OgreRenderEngine() :
 #ifdef __QNX__
-  wl_display_(nullptr),
-  wl_surface_(nullptr),
+  wl_display_(0),
+  wl_surface_(0),
 #endif
   dataPtr(new OgreRenderEnginePrivate)
 {
@@ -351,6 +351,16 @@ bool OgreRenderEngine::LoadImpl(
   auto it = _params.find("useCurrentGLContext");
   if (it != _params.end())
     std::istringstream(it->second) >> this->useCurrentGLContext;
+
+#ifdef __QNX__
+  it = _params.find("waylandDisplay");
+  if (it != _params.end())
+    std::istringstream(it->second) >> this->wl_display_;
+
+  it = _params.find("waylandSurface");
+  if (it != _params.end())
+    std::istringstream(it->second) >> this->wl_surface_;
+#endif
 
   try
   {
@@ -704,13 +714,6 @@ void OgreRenderEngine::CreateResources()
 
 #ifdef __QNX__
 //////////////////////////////////////////////////
-void OgreRenderEngine::SetDefaultPlatformNativeWindow(void *display, void *surface)
-{
-  wl_display_ = display;
-  wl_surface_ = surface;
-}
-
-//////////////////////////////////////////////////
 void OgreRenderEngine::CreateRenderWindow()
 {
   // create dummy window
@@ -732,10 +735,10 @@ std::string OgreRenderEngine::CreateRenderWindow(const std::string &_handle,
 
   static_cast<void>(_handle); // UNUSED
 
-  if (!this->useCurrentGLContext)
+  if (!this->useCurrentGLContext && (wl_display_ != 0) && (wl_surface_ != 0))
   {
-    params["externalWlDisplay"] = std::to_string(size_t(wl_display_));
-    params["externalWlSurface"] = std::to_string(size_t(wl_surface_));
+    params["externalWlDisplay"] = std::to_string(wl_display_);
+    params["externalWlSurface"] = std::to_string(wl_surface_);
   }
 
   params["FSAA"] = std::to_string(_antiAliasing);
@@ -794,7 +797,6 @@ std::string OgreRenderEngine::CreateRenderWindow(const std::string &_handle,
 
     // Windows needs to reposition the render window to 0,0.
     window->reposition(0, 0);
-    this->window = window;
   }
   return stream.str();
 }

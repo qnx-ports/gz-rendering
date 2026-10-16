@@ -94,10 +94,6 @@ namespace gz
         return GraphicsAPI::UNKNOWN;
       }
 
-#ifdef __QNX__
-      public: virtual void SetDefaultPlatformNativeWindow(void *display, void *surface);
-#endif
-
       // Documentation Inherited
       public: virtual NativeWindowPtr CreateNativeWindow(
           const std::string & /*_winHandle*/, uint32_t /*_width*/,

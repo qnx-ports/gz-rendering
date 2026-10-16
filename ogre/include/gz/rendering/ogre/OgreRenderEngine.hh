@@ -104,10 +104,6 @@ namespace gz
 
       public: virtual Ogre::Root *OgreRoot() const;
 
-#ifdef __QNX__
-      public: virtual void SetDefaultPlatformNativeWindow(void *display, void *surface) override;
-#endif
-
       public: std::string CreateRenderWindow(const std::string &_handle,
                   const unsigned int _width, const unsigned int _height,
                   const double _ratio, const unsigned int _antiAliasing);
@@ -184,9 +180,8 @@ namespace gz
 #endif
 
 #if defined(__QNX__)
-      Ogre::RenderWindow *window;
-      private: void *wl_display_;
-      private: void *wl_surface_;
+      private: size_t wl_display_;
+      private: size_t wl_surface_;
 #else
       private: uint64_t dummyWindowId = 0u;
 #endif
