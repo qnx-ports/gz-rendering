@@ -121,6 +121,10 @@ RenderEngine *OgreRenderEnginePlugin::Engine() const
 //////////////////////////////////////////////////
 OgreRenderEngine::OgreRenderEngine() :
 #ifdef __QNX__
+  gles2_plugin(nullptr),
+  pfx_plugin(nullptr),
+  bsp_scene_man_plugin(nullptr),
+  octree_scene_man_plugin(nullptr),
   wl_display_(0),
   wl_surface_(0),
 #endif
@@ -159,6 +163,18 @@ OgreRenderEngine::OgreRenderEngine() :
 //////////////////////////////////////////////////
 OgreRenderEngine::~OgreRenderEngine()
 {
+  if (gles2_plugin != nullptr) {
+    delete gles2_plugin;
+  }
+  if (pfx_plugin != nullptr) {
+    delete pfx_plugin;
+  }
+  if (bsp_scene_man_plugin != nullptr) {
+    delete bsp_scene_man_plugin;
+  }
+  if (octree_scene_man_plugin != nullptr) {
+    delete octree_scene_man_plugin;
+  }
 }
 
 //////////////////////////////////////////////////
@@ -501,6 +517,17 @@ void OgreRenderEngine::CreateOverlay()
 //////////////////////////////////////////////////
 void OgreRenderEngine::LoadPlugins()
 {
+#ifdef __QNX__
+  // Thanks to a dlopen() bug we need to get our plugins straight from the source.
+  gles2_plugin = new Ogre::GLES2Plugin();
+  this->ogreRoot->installPlugin(gles2_plugin);
+  pfx_plugin = new Ogre::ParticleFXPlugin();
+  this->ogreRoot->installPlugin(pfx_plugin);
+  bsp_scene_man_plugin = new Ogre::BspSceneManagerPlugin();
+  this->ogreRoot->installPlugin(bsp_scene_man_plugin);
+  octree_scene_man_plugin = new Ogre::OctreePlugin();
+  this->ogreRoot->installPlugin(octree_scene_man_plugin);
+#else
   for (auto iter = this->ogrePaths.begin();
        iter != this->ogrePaths.end(); ++iter)
   {
@@ -519,11 +546,7 @@ void OgreRenderEngine::LoadPlugins()
     std::string extension = ".so";
 #endif
 
-#ifdef __QNX__
-    plugins.push_back(path+"/RenderSystem_GLES2");
-#else
     plugins.push_back(path+"/RenderSystem_GL");
-#endif
     plugins.push_back(path+"/Plugin_ParticleFX");
     plugins.push_back(path+"/Plugin_BSPSceneManager");
     plugins.push_back(path+"/Plugin_OctreeSceneManager");
@@ -535,13 +558,8 @@ void OgreRenderEngine::LoadPlugins()
     for (piter = plugins.begin(); piter != plugins.end(); ++piter)
     {
 
-#ifdef __QNX__
-      bool isGLPlugin = std::string(*piter).find("RenderSystem_GLES2")
-          != std::string::npos;
-#else
       bool isGLPlugin = std::string(*piter).find("RenderSystem_GL")
           != std::string::npos;
-#endif
       try
       {
         // Load the plugin
@@ -572,6 +590,7 @@ void OgreRenderEngine::LoadPlugins()
       }
     }
   }
+#endif
 }
 
 //////////////////////////////////////////////////
