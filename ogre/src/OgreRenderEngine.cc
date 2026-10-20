@@ -1017,7 +1017,7 @@ void OgreRenderEngine::InitAttempt()
       Ogre::TFO_ANISOTROPIC);
 
   if (!OgreRTShaderSystem::Instance()->Init()) {
-    gzerr << "Failed to initialize OgreRTShaderSystem."
+    gzerr << "Failed to initialize OgreRTShaderSystem.";
   }
 
   this->scenes = OgreSceneStorePtr(new OgreSceneStore);
