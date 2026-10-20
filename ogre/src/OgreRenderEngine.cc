@@ -403,6 +403,11 @@ bool OgreRenderEngine::InitImpl()
     this->InitAttempt();
     return true;
   }
+  catch (Ogre::Exception &ex)
+  {
+    gzerr << ex.what() << std::endl;
+    return false;
+  }
   catch (...)
   {
     gzerr << "Failed to initialize render-engine" << std::endl;
@@ -760,7 +765,7 @@ std::string OgreRenderEngine::CreateRenderWindow(const std::string &_handle,
 
   static_cast<void>(_handle); // UNUSED
 
-  if (!this->useCurrentGLContext && (wl_display_ != 0) && (wl_surface_ != 0))
+  if ((wl_display_ != 0) && (wl_surface_ != 0))
   {
     params["externalWlDisplay"] = std::to_string(wl_display_);
     params["externalWlSurface"] = std::to_string(wl_surface_);
@@ -780,12 +785,6 @@ std::string OgreRenderEngine::CreateRenderWindow(const std::string &_handle,
 
   // Needed for retina displays
   params["contentScalingFactor"] = std::to_string(_ratio);
-
-  if (this->useCurrentGLContext)
-  {
-    params["externalGLControl"] = "true";
-    params["currentGLContext"] = "true";
-  }
 
   std::ostringstream stream;
   int attempts = 0;
@@ -1009,13 +1008,17 @@ void OgreRenderEngine::InitAttempt()
   // Set default mipmap level (NB some APIs ignore this)
   Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
 
+#ifndef __QNX__
   // init the resources
   Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
+#endif
 
   Ogre::MaterialManager::getSingleton().setDefaultTextureFiltering(
       Ogre::TFO_ANISOTROPIC);
 
-  OgreRTShaderSystem::Instance()->Init();
+  if (!OgreRTShaderSystem::Instance()->Init()) {
+    gzerr << "Failed to initialize OgreRTShaderSystem."
+  }
 
   this->scenes = OgreSceneStorePtr(new OgreSceneStore);
 }

@@ -134,7 +134,11 @@ bool OgreRTShaderSystem::Init()
     // Set shader cache path.
     this->dataPtr->shaderGenerator->setShaderCachePath(cachePath);
 
+#ifdef __QNX__
+    this->dataPtr->shaderGenerator->setTargetLanguage("glsles");
+#else
     this->dataPtr->shaderGenerator->setTargetLanguage("glsl");
+#endif
   }
   else
   {
