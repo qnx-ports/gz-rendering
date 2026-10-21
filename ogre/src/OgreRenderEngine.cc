@@ -954,8 +954,13 @@ void OgreRenderEngine::CheckCapabilities()
   bool hasFBO = true;
 #endif
 
+#ifdef __QNX__
+  bool hasGLSL =
+    std::find(profiles.begin(), profiles.end(), "glsles") != profiles.end();
+#else
   bool hasGLSL =
     std::find(profiles.begin(), profiles.end(), "glsl") != profiles.end();
+#endif
 
   if (!hasFragmentPrograms || !hasVertexPrograms)
   {
@@ -965,7 +970,7 @@ void OgreRenderEngine::CheckCapabilities()
 
   if (!hasGLSL)
   {
-    gzwarn << "GLSL is missing."
+    gzwarn << "GLSL is missing. "
            << "Fixed function rendering will be used.\n";
   }
 
@@ -1017,7 +1022,7 @@ void OgreRenderEngine::InitAttempt()
       Ogre::TFO_ANISOTROPIC);
 
   if (!OgreRTShaderSystem::Instance()->Init()) {
-    gzerr << "Failed to initialize OgreRTShaderSystem.";
+    gzerr << "Failed to initialize OgreRTShaderSystem." << std::endl;
   }
 
   this->scenes = OgreSceneStorePtr(new OgreSceneStore);

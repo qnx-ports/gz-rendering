@@ -145,7 +145,7 @@ bool OgreRTShaderSystem::Init()
     gzerr << "RT Shader system failed to initialize" << std::endl;
     return false;
   }
-  return false;
+  return true;
 }
 
 //////////////////////////////////////////////////
