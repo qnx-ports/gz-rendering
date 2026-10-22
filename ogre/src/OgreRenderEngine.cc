@@ -258,28 +258,6 @@ void OgreRenderEngine::AddResourcePath(const std::string &_uri)
     return;
   }
 
-  auto new_path = std::filesystem::path(path).lexically_normal();
-  if (std::any_of(this->resourcePaths.begin(), this->resourcePaths.end(), [&](const std::string& str) {
-    auto existing_path = std::filesystem::path(str).lexically_normal();
-
-    if (existing_path == new_path) {
-      return true;
-    }
-
-    std::filesystem::path rel;
-    if (existing_path.string().length() > new_path.string().length()) {
-      rel = std::filesystem::relative(existing_path, new_path);
-      if (!rel.empty() && rel.native()[0] != '.') {
-        gzerr << "Attempted to process a resource path that already exists!\n";
-      }
-    } else {
-      rel = std::filesystem::relative(new_path, existing_path);
-    }
-    return !rel.empty() && rel.native()[0] != '.';
-  })) {
-    return; // Already processed this path.
-  }
-
   this->resourcePaths.push_back(path);
 
   try
@@ -745,8 +723,8 @@ void OgreRenderEngine::CreateResources()
         std::make_pair(p + "/materials/textures", "General"));
     // archNames.push_back(
     //     std::make_pair(prefix + "/media/models", "General"));
-    archNames.push_back(
-        std::make_pair(p + "/fonts", "Fonts"));
+    // archNames.push_back(
+    //     std::make_pair(p + "/fonts", "Fonts"));
   }
 
   for (auto aiter = archNames.begin(); aiter != archNames.end(); ++aiter)
@@ -755,8 +733,6 @@ void OgreRenderEngine::CreateResources()
     {
       Ogre::ResourceGroupManager::getSingleton().addResourceLocation(
           aiter->first, "FileSystem", aiter->second);
-      // Called on startup; only tracking this for use later.
-      this->resourcePaths.push_back(aiter->first);
     }
     catch(Ogre::Exception &/*_e*/)
     {
