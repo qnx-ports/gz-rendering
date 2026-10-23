@@ -35,6 +35,29 @@
 #include "gz/rendering/ogre/OgreMesh.hh"
 #include "gz/rendering/ogre/OgreRTShaderSystem.hh"
 
+#ifdef __QNX__
+class gz::rendering::SGTechniqueResolverListener
+  : public Ogre::MaterialManager::Listener
+{
+public:
+  explicit SGTechniqueResolverListener(
+    Ogre::RTShader::ShaderGenerator* pShaderGenerator);
+
+  Ogre::Technique * handleSchemeNotFound(
+    unsigned short scheme_index,  // NOLINT: Ogre decides the use of unsigned short
+    const Ogre::String & scheme_name,
+    Ogre::Material * original_material,
+    unsigned short lod_index,  // NOLINT: Ogre decides the use of unsigned short
+    const Ogre::Renderable * rend) override;
+
+  bool afterIlluminationPassesCreated(Ogre::Technique* tech) override;
+  bool beforeIlluminationPassesCleared(Ogre::Technique* tech) override;
+
+protected:
+  Ogre::RTShader::ShaderGenerator* shaderGenerator_;
+};
+#endif
+
 class gz::rendering::OgreRTShaderSystemPrivate
 {
   /// \brief The shader generator.
@@ -42,6 +65,10 @@ class gz::rendering::OgreRTShaderSystemPrivate
 
   /// \brief Used to generate shadows.
   public: Ogre::RTShader::SubRenderState *shadowRenderState = nullptr;
+
+#ifdef __QNX__
+  public: gz::rendering::SGTechniqueResolverListener* materialManagerListener = nullptr;
+#endif
 
   /// \brief All the entities being used.
   public: std::set<OgreSubMesh *> entities;
@@ -77,6 +104,83 @@ class gz::rendering::OgreRTShaderSystemPrivate
 
 using namespace gz;
 using namespace rendering;
+
+#if defined(__QNX__)
+SGTechniqueResolverListener::SGTechniqueResolverListener(
+  Ogre::RTShader::ShaderGenerator* pShaderGenerator)
+{
+  shaderGenerator_ = pShaderGenerator;
+}
+
+Ogre::Technique * SGTechniqueResolverListener::handleSchemeNotFound(
+  unsigned short scheme_index,
+  const Ogre::String & scheme_name,
+  Ogre::Material * original_material,
+  unsigned short lod_index,
+  const Ogre::Renderable * rend)
+{
+  (void) scheme_index;
+  (void) lod_index;
+  (void) rend;
+
+  if (!shaderGenerator_->hasRenderState(scheme_name)) {
+    return nullptr;
+  }
+
+  bool techniqueCreated = shaderGenerator_->createShaderBasedTechnique(
+    *original_material,
+    Ogre::MaterialManager::DEFAULT_SCHEME_NAME,
+    scheme_name);
+
+  if (!techniqueCreated) {
+    return nullptr;
+  }
+
+  // Force creating the shaders for the generated technique.
+  shaderGenerator_->validateMaterial(scheme_name, *original_material);
+
+  // Grab the generated technique.
+  for (auto *tech : original_material->getTechniques()) {
+    if (tech->getSchemeName() == scheme_name) {
+      return tech;
+    }
+  }
+
+  return nullptr;
+}
+
+bool SGTechniqueResolverListener::beforeIlluminationPassesCleared(Ogre::Technique *tech)
+{
+  if (shaderGenerator_->hasRenderState(tech->getSchemeName())) {
+    Ogre::Material* mat = tech->getParent();
+
+    shaderGenerator_->invalidateMaterialIlluminationPasses(
+      tech->getSchemeName(),
+      mat->getName(),
+      mat->getGroup());
+
+    return true;
+  }
+
+  return false;
+}
+
+bool SGTechniqueResolverListener::afterIlluminationPassesCreated(Ogre::Technique *tech)
+{
+  if (shaderGenerator_->hasRenderState(tech->getSchemeName())) {
+    Ogre::Material* mat = tech->getParent();
+
+    shaderGenerator_->validateMaterialIlluminationPasses(
+      tech->getSchemeName(),
+      mat->getName(),
+      mat->getGroup());
+
+    return true;
+  }
+
+  return false;
+}
+#endif
 
 //////////////////////////////////////////////////
 OgreRTShaderSystem::OgreRTShaderSystem()
@@ -127,6 +231,11 @@ bool OgreRTShaderSystem::Init()
     this->dataPtr->shaderGenerator =
         Ogre::RTShader::ShaderGenerator::getSingletonPtr();
 
+#ifdef __QNX__
+    this->dataPtr->materialManagerListener = new SGTechniqueResolverListener(this->dataPtr->shaderGenerator);
+    Ogre::MaterialManager::getSingleton().addListener(this->dataPtr->materialManagerListener);
+#endif
+
     // Add the shader libs resource location
     Ogre::ResourceGroupManager::getSingleton().addResourceLocation(
         coreLibsPath, "FileSystem");
@@ -169,6 +278,12 @@ void OgreRTShaderSystem::Fini()
 #endif
     this->dataPtr->shaderGenerator = nullptr;
   }
+#ifdef __QNX__
+  if (this->dataPtr->materialManagerListener != nullptr) {
+    delete this->dataPtr->materialManagerListener;
+    this->dataPtr->materialManagerListener = nullptr;
+  }
+#endif
 #if OGRE_VERSION_LT_1_11_0
   this->dataPtr->pssmSetup.setNull();
 #else

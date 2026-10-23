@@ -725,6 +725,10 @@ void OgreRenderEngine::CreateResources()
     //     std::make_pair(prefix + "/media/models", "General"));
     // archNames.push_back(
     //     std::make_pair(p + "/fonts", "Fonts"));
+    archNames.push_back(
+        std::make_pair(p + "/Main", "General"));
+    archNames.push_back(
+        std::make_pair(p + "/RTShaderLib", "General"));
   }
 
   for (auto aiter = archNames.begin(); aiter != archNames.end(); ++aiter)
@@ -769,6 +773,11 @@ std::string OgreRenderEngine::CreateRenderWindow(const std::string &_handle,
   {
     params["externalWlDisplay"] = std::to_string(wl_display_);
     params["externalWlSurface"] = std::to_string(wl_surface_);
+  }
+  else if (this->useCurrentGLContext)
+  {
+    params["externalGLControl"] = "true";
+    params["currentGLContext"] = "true";
   }
 
   params["FSAA"] = std::to_string(_antiAliasing);
