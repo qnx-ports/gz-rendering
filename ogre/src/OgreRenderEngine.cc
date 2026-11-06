@@ -777,7 +777,7 @@ std::string OgreRenderEngine::CreateRenderWindow(const std::string &_handle,
     params["externalWlDisplay"] = std::to_string(wl_display_);
     params["externalWlSurface"] = std::to_string(wl_surface_);
   }
-  else if (this->useCurrentGLContext)
+  if (this->useCurrentGLContext)
   {
     params["externalGLControl"] = "true";
     params["currentGLContext"] = "true";
