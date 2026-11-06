@@ -569,7 +569,11 @@ void OgreGpuRays::UpdateRenderTarget(Ogre::RenderTarget *_target,
 
   // Need this line to render the ground plane. No idea why it's necessary.
   renderSys->_setViewport(vp);
+#ifdef __QNX__
   sceneMgr->_setPass(pass, true);
+#else
+  sceneMgr->_setPass(pass, true, false);
+#endif
   autoParamDataSource.setCurrentPass(pass);
   autoParamDataSource.setCurrentViewport(vp);
   autoParamDataSource.setCurrentRenderTarget(_target);
@@ -622,6 +626,9 @@ void OgreGpuRays::Render()
 {
   Ogre::SceneManager *sceneMgr = this->scene->OgreSceneManager();
 
+#ifndef __QNX__
+  sceneMgr->_suppressRenderStateChanges(true);
+#endif
   sceneMgr->addRenderObjectListener(this);
 
   for (unsigned int i = 0; i < this->dataPtr->textureCount; ++i)
@@ -655,6 +662,10 @@ void OgreGpuRays::Render()
       this->dataPtr->orthoCam, true);
 
   this->dataPtr->visual->SetVisible(false);
+
+#ifndef __QNX__
+  sceneMgr->_suppressRenderStateChanges(false);
+#endif
 }
 
 //////////////////////////////////////////////////

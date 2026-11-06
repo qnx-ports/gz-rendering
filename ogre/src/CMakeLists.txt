@@ -25,6 +25,12 @@ endif()
 if (CMAKE_SYSTEM_NAME STREQUAL "QNX")
   find_package(OpenGL COMPONENTS GLES2)
   set(OPENGL_LIBRARIES ${OpenGL_gles2_LIBRARY})
+
+    if ("${OGRE_MEDIA_DIR}" STREQUAL "")
+        message(FATAL_ERROR "OGRE_MEDIA_DIR NOT FOUND!")
+    else()
+        add_definitions(OGRE_MEDIA_DIR="${OGRE_MEDIA_DIR}")
+    endif()
 endif()
 
 set_property(

@@ -723,12 +723,15 @@ void OgreRenderEngine::CreateResources()
         std::make_pair(p + "/materials/textures", "General"));
     // archNames.push_back(
     //     std::make_pair(prefix + "/media/models", "General"));
-    // archNames.push_back(
-    //     std::make_pair(p + "/fonts", "Fonts"));
+#ifdef __QNX__
     archNames.push_back(
-        std::make_pair(p + "/Main", "General"));
+        std::make_pair(std::string(OGRE_MEDIA_DIR) + "/Main", "General"));
     archNames.push_back(
-        std::make_pair(p + "/RTShaderLib", "General"));
+        std::make_pair(std::string(OGRE_MEDIA_DIR) + "/RTShaderLib", "General"));
+#else
+    archNames.push_back(
+        std::make_pair(p + "/fonts", "Fonts"));
+#endif
   }
 
   for (auto aiter = archNames.begin(); aiter != archNames.end(); ++aiter)
