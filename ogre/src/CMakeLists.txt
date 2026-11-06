@@ -29,7 +29,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "QNX")
     if ("${OGRE_MEDIA_DIR}" STREQUAL "")
         message(FATAL_ERROR "OGRE_MEDIA_DIR NOT FOUND!")
     else()
-        add_definitions(OGRE_MEDIA_DIR="${OGRE_MEDIA_DIR}")
+        add_definitions(-DOGRE_MEDIA_DIR="${OGRE_MEDIA_DIR}")
     endif()
 endif()
 
