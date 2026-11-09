@@ -95,8 +95,13 @@ void loadGLPlugin(const std::string &_pluginName)
 #else
   glPluginHandle = dlopen(_pluginName.c_str(), RTLD_LAZY | RTLD_LOCAL);
 #endif
+#ifdef __QNX__
   DLL_START_PLUGIN pFunc = (DLL_START_PLUGIN)dlsym(
       glPluginHandle, "dllStartPlugin");
+#else
+  DLL_START_PLUGIN pFunc = (DLL_START_PLUGIN)DYNLIB_GETSYM(
+      glPluginHandle, "dllStartPlugin");
+#endif
   pFunc();
   return;
 }
@@ -163,6 +168,7 @@ OgreRenderEngine::OgreRenderEngine() :
 //////////////////////////////////////////////////
 OgreRenderEngine::~OgreRenderEngine()
 {
+#ifdef __QNX__
   if (gles2_plugin != nullptr) {
     delete gles2_plugin;
   }
@@ -175,6 +181,7 @@ OgreRenderEngine::~OgreRenderEngine()
   if (octree_scene_man_plugin != nullptr) {
     delete octree_scene_man_plugin;
   }
+#endif
 }
 
 //////////////////////////////////////////////////

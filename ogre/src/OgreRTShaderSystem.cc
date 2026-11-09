@@ -539,6 +539,7 @@ void OgreRTShaderSystem::GenerateShaders(OgreSubMesh *subMesh)
 #endif
             0);
 
+#ifdef __QNX__
       // Remove all sub render states.
       renderState->resetToBuiltinSubRenderStates();
 
@@ -580,6 +581,58 @@ void OgreRTShaderSystem::GenerateShaders(OgreSubMesh *subMesh)
 
         renderState->addTemplateSubRenderState(perPixelLightModel);
       }
+#else
+      // Remove all sub render states.
+      renderState->reset();
+
+      if (shaderTypeName == "normal_map_object_space")
+      {
+        Ogre::RTShader::SubRenderState* subRenderState =
+          this->dataPtr->shaderGenerator->createSubRenderState(
+              Ogre::RTShader::NormalMapLighting::Type);
+
+        Ogre::RTShader::NormalMapLighting* normalMapSubRS =
+          static_cast<Ogre::RTShader::NormalMapLighting*>(subRenderState);
+
+        normalMapSubRS->setNormalMapSpace(
+            Ogre::RTShader::NormalMapLighting::NMS_OBJECT);
+
+        normalMapSubRS->setNormalMapTextureName(normalMapName);
+        renderState->addTemplateSubRenderState(normalMapSubRS);
+      }
+      else if (shaderTypeName == "normal_map_tangent_space")
+      {
+        Ogre::RTShader::SubRenderState* subRenderState =
+          this->dataPtr->shaderGenerator->createSubRenderState(
+              Ogre::RTShader::NormalMapLighting::Type);
+
+        Ogre::RTShader::NormalMapLighting* normalMapSubRS =
+          static_cast<Ogre::RTShader::NormalMapLighting*>(subRenderState);
+
+        normalMapSubRS->setNormalMapSpace(
+            Ogre::RTShader::NormalMapLighting::NMS_TANGENT);
+
+        normalMapSubRS->setNormalMapTextureName(normalMapName);
+
+        renderState->addTemplateSubRenderState(normalMapSubRS);
+      }
+      else if (shaderTypeName == "vertex")
+      {
+        Ogre::RTShader::SubRenderState *perPerVertexLightModel =
+          this->dataPtr->shaderGenerator->createSubRenderState(
+              Ogre::RTShader::FFPLighting::Type);
+
+        renderState->addTemplateSubRenderState(perPerVertexLightModel);
+      }
+      else
+      {
+        Ogre::RTShader::SubRenderState *perPixelLightModel =
+          this->dataPtr->shaderGenerator->createSubRenderState(
+              Ogre::RTShader::PerPixelLighting::Type);
+
+        renderState->addTemplateSubRenderState(perPixelLightModel);
+      }
+#endif
 
 
       // Invalidate this material in order to re-generate its shaders.
@@ -667,8 +720,13 @@ void OgreRTShaderSystem::RemoveShadows(OgreScenePtr _scene)
         _scene->Name() +
         Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
 
+#ifdef __QNX__
   schemeRenderState->removeSubRenderState(
       this->dataPtr->shadowRenderState);
+#else
+  schemeRenderState->removeTemplateSubRenderState(
+      this->dataPtr->shadowRenderState);
+#endif
 
   this->dataPtr->shaderGenerator->invalidateScheme(_scene->Name() +
       Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
@@ -758,15 +816,38 @@ void OgreRTShaderSystem::ApplyShadows(OgreScenePtr _scene)
   // cameraSetup->setOptimalAdjustFactor(1, 1);
   // cameraSetup->setOptimalAdjustFactor(2, 0.5);
 
+#ifdef __QNX__
   this->dataPtr->shadowRenderState =
       this->dataPtr->shaderGenerator->createSubRenderState(
       Ogre::RTShader::SRS_INTEGRATED_PSSM3);
+#else
+  this->dataPtr->shadowRenderState =
+      this->dataPtr->shaderGenerator->createSubRenderState(
+      Ogre::RTShader::IntegratedPSSM3::Type);
+  Ogre::RTShader::IntegratedPSSM3 *pssm3SubRenderState =
+      static_cast<Ogre::RTShader::IntegratedPSSM3 *>(
+      this->dataPtr->shadowRenderState);
+#endif
 
   const Ogre::PSSMShadowCameraSetup::SplitPointList &srcSplitPoints =
     cameraSetup->getSplitPoints();
 
-  this->dataPtr->shadowRenderState->setParameter("split_points", srcSplitPoints);
+#ifdef__QNX__
+  std::vector<float> dstSplitPoints;
+#else
+  Ogre::RTShader::IntegratedPSSM3::SplitPointList dstSplitPoints;
+#endif
 
+  for (size_t i = 0; i < srcSplitPoints.size(); ++i)
+  {
+    dstSplitPoints.push_back(srcSplitPoints[i]);
+  }
+
+#ifdef __QNX__
+  this->dataPtr->shadowRenderState->setParameter("split_points", dstSplitPoints);
+#else
+  pssm3SubRenderState->setSplitPoints(dstSplitPoints);
+#endif
   schemRenderState->addTemplateSubRenderState(this->dataPtr->shadowRenderState);
 
   this->dataPtr->shaderGenerator->invalidateScheme(_scene->Name() +
