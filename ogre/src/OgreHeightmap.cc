@@ -230,6 +230,11 @@ class TerrainMaterial : public Ogre::TerrainMaterialGenerator
   /// \brief Subclassed to provide profile-specific material generation
   class Profile : public Ogre::TerrainMaterialGenerator::Profile
   {
+#ifdef __QNX__
+  protected: Ogre::TerrainMaterialGenerator *mParent;
+  protected: Ogre::String mName;
+#endif
+
     /// \brief Constructor
     /// \param[in] _parent Ogre terrain material generator object
     /// \param[in] _name Name of the profile
@@ -240,6 +245,15 @@ class TerrainMaterial : public Ogre::TerrainMaterialGenerator
     /// \brief Destructor.
     public: ~Profile();
 
+#ifdef __QNX__
+    public: Ogre::TerrainMaterialGenerator *getParent() {
+      return mParent;
+    }
+
+    public: Ogre::String getName() {
+      return mName;
+    }
+#else
     // Documentation Inherited
     public: bool isVertexCompressionSupported() const override;
 
@@ -267,7 +281,64 @@ class TerrainMaterial : public Ogre::TerrainMaterialGenerator
 
     // Documentation Inherited
     public: void requestOptions(Ogre::Terrain *_terrain) override;
+#endif
   };
+
+#ifdef __QNX__
+  // Documentation Inherited
+  public: bool isVertexCompressionSupported() const override;
+
+  // Documentation Inherited
+  public: Ogre::MaterialPtr generate(const Ogre::Terrain *_terrain) override;
+
+  // Documentation Inherited
+  public: Ogre::MaterialPtr generateForCompositeMap(
+      const Ogre::Terrain *_terrain) override;
+
+  // Documentation Inherited
+  public: void setLightmapEnabled(bool _enabled) override;
+
+  // Documentation Inherited
+  public: Ogre::uint8 getMaxLayers(const Ogre::Terrain *_terrain) const
+      override;
+
+  // Documentation Inherited
+  public: void updateParams(const Ogre::MaterialPtr& mat,
+      const Ogre::Terrain *_terrain) override;
+
+  // Documentation Inherited
+  public: void updateParamsForCompositeMap(const Ogre::MaterialPtr& mat,
+      const Ogre::Terrain *_terrain) override;
+
+  // Documentation Inherited
+  public: void requestOptions(Ogre::Terrain *_terrain) override;
+
+  public: void setActiveProfile(const Ogre::String& name)
+  {
+      if (!mActiveProfile || mActiveProfile->getName() != name)
+      {
+          for (auto & p : mProfiles)
+          {
+              if (p->getName() == name)
+              {
+                  setActiveProfile(p);
+                  break;
+              }
+          }
+      }
+  }
+
+  public: void setActiveProfile(Profile* p)
+  {
+      if (mActiveProfile != p)
+      {
+          mActiveProfile = p;
+      }
+  }
+
+  protected: Profile *mActiveProfile;
+  protected: std::vector<Profile*> mProfiles;
+#endif
 
   /// \brief Name of material
   protected: std::string materialName;
@@ -1061,7 +1132,9 @@ void OgreHeightmap::SetupShadows(bool _enableShadows)
     matProfile->setReceiveDynamicShadowsEnabled(true);
     matProfile->setReceiveDynamicShadowsPSSM(
         OgreRTShaderSystem::Instance()->PSSMShadowCameraSetup());
+#ifndef __QNX__
     matProfile->setReceiveDynamicShadowsDepth(true);
+#endif
     matProfile->setReceiveDynamicShadowsLowLod(false);
   }
   else
@@ -2704,7 +2777,11 @@ void TerrainMaterial::setGridSize(const unsigned int _size)
 //////////////////////////////////////////////////
 TerrainMaterial::Profile::Profile(Ogre::TerrainMaterialGenerator *_parent,
     const Ogre::String &_name, const Ogre::String &_desc)
+#ifdef __QNX__
+    : mParent(_parent), mName(_name)
+#else
     : Ogre::TerrainMaterialGenerator::Profile(_parent, _name, _desc)
+#endif
 {
 }
 
@@ -2714,14 +2791,23 @@ TerrainMaterial::Profile::~Profile()
 }
 
 //////////////////////////////////////////////////
+#ifdef __QNX__
+bool TerrainMaterial::isVertexCompressionSupported() const
+#else
 bool TerrainMaterial::Profile::isVertexCompressionSupported() const
+#endif
 {
   return false;
 }
 
 //////////////////////////////////////////////////
+#ifdef __QNX__
+Ogre::MaterialPtr TerrainMaterial::generate(
+    const Ogre::Terrain *_terrain)
+#else
 Ogre::MaterialPtr TerrainMaterial::Profile::generate(
     const Ogre::Terrain *_terrain)
+#endif
 {
   const Ogre::String& matName = _terrain->getMaterialName();
 
@@ -2730,8 +2816,13 @@ Ogre::MaterialPtr TerrainMaterial::Profile::generate(
   if (!mat.isNull())
       Ogre::MaterialManager::getSingleton().remove(matName);
 
+#ifdef __QNX__
+  TerrainMaterial *parent =
+      dynamic_cast<TerrainMaterial *>(mActiveProfile->getParent());
+#else
   TerrainMaterial *parent =
       dynamic_cast<TerrainMaterial *>(getParent());
+#endif
 
   // Set Ogre material
   mat = Ogre::MaterialManager::getSingleton().getByName(parent->materialName);
@@ -2806,39 +2897,68 @@ Ogre::MaterialPtr TerrainMaterial::Profile::generate(
 }
 
 //////////////////////////////////////////////////
+#ifdef __QNX__
+Ogre::MaterialPtr TerrainMaterial::generateForCompositeMap(
+    const Ogre::Terrain *_terrain)
+#else
 Ogre::MaterialPtr TerrainMaterial::Profile::generateForCompositeMap(
     const Ogre::Terrain *_terrain)
+#endif
 {
   return _terrain->_getCompositeMapMaterial();
 }
 
 //////////////////////////////////////////////////
+#ifdef __QNX__
+void TerrainMaterial::setLightmapEnabled(
+    bool /*_enabled*/)
+#else
 void TerrainMaterial::Profile::setLightmapEnabled(
     bool /*_enabled*/)
+#endif
 {
 }
 
 //////////////////////////////////////////////////
+#ifdef __QNX__
+Ogre::uint8 TerrainMaterial::getMaxLayers(
+    const Ogre::Terrain * /*_terrain*/) const
+#else
 Ogre::uint8 TerrainMaterial::Profile::getMaxLayers(
     const Ogre::Terrain * /*_terrain*/) const
+#endif
 {
   return 0;
 }
 
 //////////////////////////////////////////////////
+#ifdef __QNX__
+void TerrainMaterial::updateParams(const Ogre::MaterialPtr &/*_mat*/,
+    const Ogre::Terrain * /*_terrain*/)
+#else
 void TerrainMaterial::Profile::updateParams(const Ogre::MaterialPtr &/*_mat*/,
     const Ogre::Terrain * /*_terrain*/)
+#endif
 {
 }
 
 //////////////////////////////////////////////////
+#ifdef __QNX__
+void TerrainMaterial::updateParamsForCompositeMap(
+    const Ogre::MaterialPtr &/*_mat*/, const Ogre::Terrain * /*_terrain*/)
+#else
 void TerrainMaterial::Profile::updateParamsForCompositeMap(
     const Ogre::MaterialPtr &/*_mat*/, const Ogre::Terrain * /*_terrain*/)
+#endif
 {
 }
 
 //////////////////////////////////////////////////
+#ifdef __QNX__
+void TerrainMaterial::requestOptions(Ogre::Terrain *_terrain)
+#else
 void TerrainMaterial::Profile::requestOptions(Ogre::Terrain *_terrain)
+#endif
 {
   _terrain->_setMorphRequired(true);
   // enable global normal map

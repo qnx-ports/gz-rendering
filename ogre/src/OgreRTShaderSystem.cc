@@ -35,6 +35,29 @@
 #include "gz/rendering/ogre/OgreMesh.hh"
 #include "gz/rendering/ogre/OgreRTShaderSystem.hh"
 
+#ifdef __QNX__
+class gz::rendering::SGTechniqueResolverListener
+  : public Ogre::MaterialManager::Listener
+{
+public:
+  explicit SGTechniqueResolverListener(
+    Ogre::RTShader::ShaderGenerator* pShaderGenerator);
+
+  Ogre::Technique * handleSchemeNotFound(
+    unsigned short scheme_index,  // NOLINT: Ogre decides the use of unsigned short
+    const Ogre::String & scheme_name,
+    Ogre::Material * original_material,
+    unsigned short lod_index,  // NOLINT: Ogre decides the use of unsigned short
+    const Ogre::Renderable * rend) override;
+
+  bool afterIlluminationPassesCreated(Ogre::Technique* tech) override;
+  bool beforeIlluminationPassesCleared(Ogre::Technique* tech) override;
+
+protected:
+  Ogre::RTShader::ShaderGenerator* shaderGenerator_;
+};
+#endif
+
 class gz::rendering::OgreRTShaderSystemPrivate
 {
   /// \brief The shader generator.
@@ -42,6 +65,10 @@ class gz::rendering::OgreRTShaderSystemPrivate
 
   /// \brief Used to generate shadows.
   public: Ogre::RTShader::SubRenderState *shadowRenderState = nullptr;
+
+#ifdef __QNX__
+  public: gz::rendering::SGTechniqueResolverListener* materialManagerListener = nullptr;
+#endif
 
   /// \brief All the entites being used.
   public: std::set<OgreSubMesh *> entities;
@@ -77,6 +104,83 @@ class gz::rendering::OgreRTShaderSystemPrivate
 
 using namespace gz;
 using namespace rendering;
+
+#if defined(__QNX__)
+SGTechniqueResolverListener::SGTechniqueResolverListener(
+  Ogre::RTShader::ShaderGenerator* pShaderGenerator)
+{
+  shaderGenerator_ = pShaderGenerator;
+}
+
+Ogre::Technique * SGTechniqueResolverListener::handleSchemeNotFound(
+  unsigned short scheme_index,
+  const Ogre::String & scheme_name,
+  Ogre::Material * original_material,
+  unsigned short lod_index,
+  const Ogre::Renderable * rend)
+{
+  (void) scheme_index;
+  (void) lod_index;
+  (void) rend;
+
+  if (!shaderGenerator_->hasRenderState(scheme_name)) {
+    return nullptr;
+  }
+
+  bool techniqueCreated = shaderGenerator_->createShaderBasedTechnique(
+    *original_material,
+    Ogre::MaterialManager::DEFAULT_SCHEME_NAME,
+    scheme_name);
+
+  if (!techniqueCreated) {
+    return nullptr;
+  }
+
+  // Force creating the shaders for the generated technique.
+  shaderGenerator_->validateMaterial(scheme_name, *original_material);
+
+  // Grab the generated technique.
+  for (auto *tech : original_material->getTechniques()) {
+    if (tech->getSchemeName() == scheme_name) {
+      return tech;
+    }
+  }
+
+  return nullptr;
+}
+
+bool SGTechniqueResolverListener::beforeIlluminationPassesCleared(Ogre::Technique *tech)
+{
+  if (shaderGenerator_->hasRenderState(tech->getSchemeName())) {
+    Ogre::Material* mat = tech->getParent();
+
+    shaderGenerator_->invalidateMaterialIlluminationPasses(
+      tech->getSchemeName(),
+      mat->getName(),
+      mat->getGroup());
+
+    return true;
+  }
+
+  return false;
+}
+
+bool SGTechniqueResolverListener::afterIlluminationPassesCreated(Ogre::Technique *tech)
+{
+  if (shaderGenerator_->hasRenderState(tech->getSchemeName())) {
+    Ogre::Material* mat = tech->getParent();
+
+    shaderGenerator_->validateMaterialIlluminationPasses(
+      tech->getSchemeName(),
+      mat->getName(),
+      mat->getGroup());
+
+    return true;
+  }
+
+  return false;
+}
+#endif
 
 //////////////////////////////////////////////////
 OgreRTShaderSystem::OgreRTShaderSystem()
@@ -127,6 +231,11 @@ bool OgreRTShaderSystem::Init()
     this->dataPtr->shaderGenerator =
         Ogre::RTShader::ShaderGenerator::getSingletonPtr();
 
+#ifdef __QNX__
+    this->dataPtr->materialManagerListener = new SGTechniqueResolverListener(this->dataPtr->shaderGenerator);
+    Ogre::MaterialManager::getSingleton().addListener(this->dataPtr->materialManagerListener);
+#endif
+
     // Add the shader libs resource location
     Ogre::ResourceGroupManager::getSingleton().addResourceLocation(
         coreLibsPath, "FileSystem");
@@ -134,14 +243,18 @@ bool OgreRTShaderSystem::Init()
     // Set shader cache path.
     this->dataPtr->shaderGenerator->setShaderCachePath(cachePath);
 
+#ifdef __QNX__
+    this->dataPtr->shaderGenerator->setTargetLanguage("glsles");
+#else
     this->dataPtr->shaderGenerator->setTargetLanguage("glsl");
+#endif
   }
   else
   {
     gzerr << "RT Shader system failed to initialize" << std::endl;
     return false;
   }
-  return false;
+  return true;
 }
 
 //////////////////////////////////////////////////
@@ -165,6 +278,12 @@ void OgreRTShaderSystem::Fini()
 #endif
     this->dataPtr->shaderGenerator = nullptr;
   }
+#ifdef __QNX__
+  if (this->dataPtr->materialManagerListener != nullptr) {
+    delete this->dataPtr->materialManagerListener;
+    this->dataPtr->materialManagerListener = nullptr;
+  }
+#endif
 #if OGRE_VERSION_LT_1_11_0
   this->dataPtr->pssmSetup.setNull();
 #else
@@ -420,6 +539,49 @@ void OgreRTShaderSystem::GenerateShaders(OgreSubMesh *subMesh)
 #endif
             0);
 
+#ifdef __QNX__
+      // Remove all sub render states.
+      renderState->resetToBuiltinSubRenderStates();
+
+      if (shaderTypeName == "normal_map_object_space")
+      {
+        Ogre::RTShader::SubRenderState* normalMapSubRS =
+          this->dataPtr->shaderGenerator->createSubRenderState(
+              Ogre::RTShader::SRS_NORMALMAP);
+
+        normalMapSubRS->setParameter("normalmap_space", "object_space");
+
+        normalMapSubRS->setParameter("texture_index", normalMapName);
+        renderState->addTemplateSubRenderState(normalMapSubRS);
+      }
+      else if (shaderTypeName == "normal_map_tangent_space")
+      {
+        Ogre::RTShader::SubRenderState* normalMapSubRS =
+          this->dataPtr->shaderGenerator->createSubRenderState(
+              Ogre::RTShader::SRS_NORMALMAP);
+
+        normalMapSubRS->setParameter("normalmap_space", "tangent_space");
+
+        normalMapSubRS->setParameter("texture_index", normalMapName);
+        renderState->addTemplateSubRenderState(normalMapSubRS);
+      }
+      else if (shaderTypeName == "vertex")
+      {
+        Ogre::RTShader::SubRenderState *perPerVertexLightModel =
+          this->dataPtr->shaderGenerator->createSubRenderState(
+              Ogre::RTShader::SRS_PER_VERTEX_LIGHTING);
+
+        renderState->addTemplateSubRenderState(perPerVertexLightModel);
+      }
+      else
+      {
+        Ogre::RTShader::SubRenderState *perPixelLightModel =
+          this->dataPtr->shaderGenerator->createSubRenderState(
+              Ogre::RTShader::SRS_PER_PIXEL_LIGHTING);
+
+        renderState->addTemplateSubRenderState(perPixelLightModel);
+      }
+#else
       // Remove all sub render states.
       renderState->reset();
 
@@ -470,6 +632,7 @@ void OgreRTShaderSystem::GenerateShaders(OgreSubMesh *subMesh)
 
         renderState->addTemplateSubRenderState(perPixelLightModel);
       }
+#endif
 
 
       // Invalidate this material in order to re-generate its shaders.
@@ -570,8 +733,13 @@ void OgreRTShaderSystem::RemoveShadows(OgreScenePtr _scene)
         _scene->Name() +
         Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
 
+#ifdef __QNX__
+  schemeRenderState->removeSubRenderState(
+      this->dataPtr->shadowRenderState);
+#else
   schemeRenderState->removeTemplateSubRenderState(
       this->dataPtr->shadowRenderState);
+#endif
 
   this->dataPtr->shaderGenerator->invalidateScheme(_scene->Name() +
       Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
@@ -661,24 +829,38 @@ void OgreRTShaderSystem::ApplyShadows(OgreScenePtr _scene)
   // cameraSetup->setOptimalAdjustFactor(1, 1);
   // cameraSetup->setOptimalAdjustFactor(2, 0.5);
 
+#ifdef __QNX__
+  this->dataPtr->shadowRenderState =
+      this->dataPtr->shaderGenerator->createSubRenderState(
+      Ogre::RTShader::SRS_INTEGRATED_PSSM3);
+#else
   this->dataPtr->shadowRenderState =
       this->dataPtr->shaderGenerator->createSubRenderState(
       Ogre::RTShader::IntegratedPSSM3::Type);
   Ogre::RTShader::IntegratedPSSM3 *pssm3SubRenderState =
       static_cast<Ogre::RTShader::IntegratedPSSM3 *>(
       this->dataPtr->shadowRenderState);
+#endif
 
   const Ogre::PSSMShadowCameraSetup::SplitPointList &srcSplitPoints =
     cameraSetup->getSplitPoints();
 
+#ifdef__QNX__
+  std::vector<float> dstSplitPoints;
+#else
   Ogre::RTShader::IntegratedPSSM3::SplitPointList dstSplitPoints;
+#endif
 
   for (unsigned int i = 0; i < srcSplitPoints.size(); ++i)
   {
     dstSplitPoints.push_back(srcSplitPoints[i]);
   }
 
+#ifdef __QNX__
+  this->dataPtr->shadowRenderState->setParameter("split_points", dstSplitPoints);
+#else
   pssm3SubRenderState->setSplitPoints(dstSplitPoints);
+#endif
   schemRenderState->addTemplateSubRenderState(this->dataPtr->shadowRenderState);
 
   this->dataPtr->shaderGenerator->invalidateScheme(_scene->Name() +

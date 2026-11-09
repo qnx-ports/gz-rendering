@@ -16,7 +16,7 @@
  */
 
 // Not Apple or Windows
-#if !defined(__APPLE__) && !defined(_WIN32)
+#if !defined(__APPLE__) && !defined(_WIN32) && !defined(__QNX__)
 # include <X11/Xlib.h>
 # include <X11/Xutil.h>
 # include <GL/glx.h>
@@ -47,7 +47,7 @@
 
 class gz::rendering::OgreRenderEnginePrivate
 {
-#if !defined(__APPLE__) && !defined(_WIN32)
+#if !defined(__APPLE__) && !defined(_WIN32) && !defined(__QNX__)
   public: XVisualInfo *dummyVisual = nullptr;
 #endif
 
@@ -77,6 +77,14 @@ RenderEngine *OgreRenderEnginePlugin::Engine() const
 
 //////////////////////////////////////////////////
 OgreRenderEngine::OgreRenderEngine() :
+#ifdef __QNX__
+  gles2_plugin(nullptr),
+  pfx_plugin(nullptr),
+  bsp_scene_man_plugin(nullptr),
+  octree_scene_man_plugin(nullptr),
+  wl_display_(0),
+  wl_surface_(0),
+#endif
   dataPtr(new OgreRenderEnginePrivate)
 {
   this->ogrePaths.push_back(OGRE_RESOURCE_PATH);
@@ -89,6 +97,20 @@ OgreRenderEngine::OgreRenderEngine() :
 //////////////////////////////////////////////////
 OgreRenderEngine::~OgreRenderEngine()
 {
+#ifdef __QNX__
+  if (gles2_plugin != nullptr) {
+    delete gles2_plugin;
+  }
+  if (pfx_plugin != nullptr) {
+    delete pfx_plugin;
+  }
+  if (bsp_scene_man_plugin != nullptr) {
+    delete bsp_scene_man_plugin;
+  }
+  if (octree_scene_man_plugin != nullptr) {
+    delete octree_scene_man_plugin;
+  }
+#endif
 }
 
 //////////////////////////////////////////////////
@@ -124,7 +146,7 @@ void OgreRenderEngine::Destroy()
   delete this->ogreLogManager;
   this->ogreLogManager = nullptr;
 
-#if (!defined(__APPLE__) && !defined(_WIN32))
+#if (!defined(__APPLE__) && !defined(_WIN32) && !defined(__QNX__))
   if (this->dummyDisplay)
   {
     Display *x11Display = static_cast<Display*>(this->dummyDisplay);
@@ -282,6 +304,16 @@ bool OgreRenderEngine::LoadImpl(
   if (it != _params.end())
     std::istringstream(it->second) >> this->useCurrentGLContext;
 
+#ifdef __QNX__
+  it = _params.find("waylandDisplay");
+  if (it != _params.end())
+    std::istringstream(it->second) >> this->wl_display_;
+
+  it = _params.find("waylandSurface");
+  if (it != _params.end())
+    std::istringstream(it->second) >> this->wl_surface_;
+#endif
+
   try
   {
     this->LoadAttempt();
@@ -306,6 +338,11 @@ bool OgreRenderEngine::InitImpl()
   {
     this->InitAttempt();
     return true;
+  }
+  catch (Ogre::Exception &ex)
+  {
+    gzerr << ex.what() << std::endl;
+    return false;
   }
   catch (...)
   {
@@ -348,7 +385,7 @@ void OgreRenderEngine::CreateLogger()
 //////////////////////////////////////////////////
 void OgreRenderEngine::CreateContext()
 {
-#if (!defined(__APPLE__) && !defined(_WIN32))
+#if (!defined(__APPLE__) && !defined(_WIN32) && !defined(__QNX__))
   // create X11 display
   this->dummyDisplay = XOpenDisplay(0);
   Display *x11Display = static_cast<Display*>(this->dummyDisplay);
@@ -421,6 +458,17 @@ void OgreRenderEngine::CreateOverlay()
 //////////////////////////////////////////////////
 void OgreRenderEngine::LoadPlugins()
 {
+#ifdef __QNX__
+  // Thanks to a dlopen() bug we need to get our plugins straight from the source.
+  gles2_plugin = new Ogre::GLES2Plugin();
+  this->ogreRoot->installPlugin(gles2_plugin);
+  pfx_plugin = new Ogre::ParticleFXPlugin();
+  this->ogreRoot->installPlugin(pfx_plugin);
+  bsp_scene_man_plugin = new Ogre::BspSceneManagerPlugin();
+  this->ogreRoot->installPlugin(bsp_scene_man_plugin);
+  octree_scene_man_plugin = new Ogre::OctreePlugin();
+  this->ogreRoot->installPlugin(octree_scene_man_plugin);
+#else
   for (auto iter = this->ogrePaths.begin();
        iter != this->ogrePaths.end(); ++iter)
   {
@@ -474,6 +522,7 @@ void OgreRenderEngine::LoadPlugins()
       }
     }
   }
+#endif
 }
 
 //////////////////////////////////////////////////
@@ -504,7 +553,15 @@ void OgreRenderEngine::CreateRenderSystem()
   // (it thinks the while loop is empty), so we must put the whole while
   // statement on one line and add NOLINT at the end so that cpplint doesn't
   // complain about the line being too long
+<<<<<<< HEAD
   while (renderSys && renderSys->getName().compare("OpenGL Rendering Subsystem") != 0); // NOLINT
+=======
+#ifdef __QNX__
+  while (renderSys && renderSys->getName().find("OpenGL") == Ogre::String::npos); // NOLINT
+#else
+  while (renderSys && renderSys->getName() != "OpenGL Rendering Subsystem"); // NOLINT
+#endif
+>>>>>>> cfe11236 (QNX: Port.)
 
   if (renderSys == nullptr)
   {
@@ -517,12 +574,14 @@ void OgreRenderEngine::CreateRenderSystem()
   // We operate in windowed mode
   renderSys->setConfigOption("Full Screen", "No");
 
+#ifndef __QNX__
   /// We used to allow the user to set the RTT mode to PBuffer, FBO, or Copy.
   ///   Copy is slow, and there doesn't seem to be a good reason to use it
   ///   PBuffer limits the size of the renderable area of the RTT to the
   ///           size of the first window created.
   ///   FBO seem to be the only good option
   renderSys->setConfigOption("RTT Preferred Mode", "FBO");
+#endif
 
   // get all supported fsaa values
   Ogre::ConfigOptionMap configMap = renderSys->getConfigOptions();
@@ -608,8 +667,15 @@ void OgreRenderEngine::CreateResources()
         std::make_pair(p + "/materials/textures", "General"));
     // archNames.push_back(
     //     std::make_pair(prefix + "/media/models", "General"));
+#ifdef __QNX__
+    archNames.push_back(
+        std::make_pair(std::string(OGRE_MEDIA_DIR) + "/Main", "General"));
+    archNames.push_back(
+        std::make_pair(std::string(OGRE_MEDIA_DIR) + "/RTShaderLib", "General"));
+#else
     archNames.push_back(
         std::make_pair(p + "/fonts", "Fonts"));
+#endif
   }
 
   for (auto aiter = archNames.begin(); aiter != archNames.end(); ++aiter)
@@ -627,6 +693,94 @@ void OgreRenderEngine::CreateResources()
   }
 }
 
+#ifdef __QNX__
+//////////////////////////////////////////////////
+void OgreRenderEngine::CreateRenderWindow()
+{
+  // create dummy window
+  auto res = this->CreateRenderWindow("", 1, 1,
+      1, 0);
+  if (res.empty())
+  {
+    gzerr << "Failed to create dummy render window." << std::endl;
+  }
+}
+
+//////////////////////////////////////////////////
+std::string OgreRenderEngine::CreateRenderWindow(const std::string &_handle,
+    const unsigned int _width, const unsigned int _height,
+    const double _ratio, const unsigned int _antiAliasing)
+{
+  Ogre::NameValuePairList params;
+  Ogre::RenderWindow *window = nullptr;
+
+  static_cast<void>(_handle); // UNUSED
+
+  if ((wl_display_ != 0) && (wl_surface_ != 0))
+  {
+    params["externalWlDisplay"] = std::to_string(wl_display_);
+    params["externalWlSurface"] = std::to_string(wl_surface_);
+  }
+  if (this->useCurrentGLContext)
+  {
+    params["externalGLControl"] = "true";
+    params["currentGLContext"] = "true";
+  }
+
+  params["FSAA"] = std::to_string(_antiAliasing);
+  params["stereoMode"] = "Frame Sequential";
+
+  // TODO(anyone): determine api without qt
+
+  // Set the macAPI for Ogre based on the Qt implementation
+  params["macAPI"] = "cocoa";
+  params["macAPICocoaUseNSView"] = "true";
+
+  // Hide window if dimensions are less than or equal to one.
+  params["border"] = "none";
+
+  // Needed for retina displays
+  params["contentScalingFactor"] = std::to_string(_ratio);
+
+  std::ostringstream stream;
+  int attempts = 0;
+  while (window == nullptr && attempts < 10)
+  {
+    stream.str("");
+    stream << "OgreWindow(" << attempts << ")";
+    try
+    {
+      window = this->ogreRoot->createRenderWindow(
+          stream.str(), _width, _height, false, &params);
+    }
+    catch(Ogre::Exception &_e)
+    {
+      gzerr << "Unable to create the rendering window. Attempt [" << attempts
+             << "]. Exception [" << _e.what() << "]" << std::endl;
+      window = nullptr;
+    }
+    attempts++;
+  }
+
+  if (attempts >= 10)
+  {
+    gzerr << "Unable to create the rendering window after [" << attempts
+           << "] attempts." << std::endl;
+    return std::string();
+  }
+
+  if (nullptr != window)
+  {
+    window->setActive(true);
+    window->setVisible(true);
+    window->setAutoUpdated(false);
+
+    // Windows needs to reposition the render window to 0,0.
+    window->reposition(0, 0);
+  }
+  return stream.str();
+}
+#else
 //////////////////////////////////////////////////
 void OgreRenderEngine::CreateRenderWindow()
 {
@@ -717,6 +871,7 @@ std::string OgreRenderEngine::CreateRenderWindow(const std::string &_handle,
   }
   return stream.str();
 }
+#endif
 
 //////////////////////////////////////////////////
 void OgreRenderEngine::CheckCapabilities()
@@ -755,8 +910,13 @@ void OgreRenderEngine::CheckCapabilities()
   bool hasFBO = true;
 #endif
 
+#ifdef __QNX__
+  bool hasGLSL =
+    std::find(profiles.begin(), profiles.end(), "glsles") != profiles.end();
+#else
   bool hasGLSL =
     std::find(profiles.begin(), profiles.end(), "glsl") != profiles.end();
+#endif
 
   if (!hasFragmentPrograms || !hasVertexPrograms)
   {
@@ -766,7 +926,7 @@ void OgreRenderEngine::CheckCapabilities()
 
   if (!hasGLSL)
   {
-    gzwarn << "GLSL is missing."
+    gzwarn << "GLSL is missing. "
            << "Fixed function rendering will be used.\n";
   }
 
@@ -815,7 +975,9 @@ void OgreRenderEngine::InitAttempt()
   Ogre::MaterialManager::getSingleton().setDefaultTextureFiltering(
       Ogre::TFO_ANISOTROPIC);
 
-  OgreRTShaderSystem::Instance()->Init();
+  if (!OgreRTShaderSystem::Instance()->Init()) {
+    gzerr << "Failed to initialize OgreRTShaderSystem." << std::endl;
+  }
 
   this->scenes = OgreSceneStorePtr(new OgreSceneStore);
 }
