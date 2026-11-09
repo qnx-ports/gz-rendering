@@ -8,9 +8,16 @@ if (APPLE OR UNIX)
   include_directories(SYSTEM ${GLUT_INCLUDE_DIRS})
   link_directories(${GLUT_LIBRARY_DIRS})
 
-  find_package(OpenGL REQUIRED)
-  include_directories(SYSTEM ${OpenGL_INCLUDE_DIRS})
-  link_directories(${OpenGL_LIBRARY_DIRS})
+  if (CMAKE_SYSTEM_NAME STREQUAL "QNX")
+    find_package(OpenGL REQUIRED COMPONENTS GLES2)
+    include_directories(SYSTEM ${OpenGL_gles2_INCLUDE_DIR})
+    link_directories(${OpenGL_gles2_LIBRARY_DIR})
+    set(OPENGL_LIBRARIES ${OpenGL_gles2_LIBRARY})
+  else()
+    find_package(OpenGL REQUIRED)
+    include_directories(SYSTEM ${OpenGL_INCLUDE_DIRS})
+    link_directories(${OpenGL_LIBRARY_DIRS})
+  endif()
 
   set(TARGET_THIRD_PARTY_DEPENDS
 		${TARGET_THIRD_PARTY_DEPENDS}

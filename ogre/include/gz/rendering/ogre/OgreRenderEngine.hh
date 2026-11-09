@@ -31,6 +31,13 @@
 #include "gz/rendering/ogre/OgreRenderTypes.hh"
 #include "gz/rendering/ogre/Export.hh"
 
+#ifdef __QNX__
+#include <OgreGLES2Plugin.h>
+#include <OgreParticleFXPlugin.h>
+#include <OgreBspSceneManagerPlugin.h>
+#include <OgreOctreePlugin.h>
+#endif
+
 namespace Ogre
 {
   class LogManager;
@@ -179,7 +186,17 @@ namespace gz
       private: void *dummyContext = nullptr;
 #endif
 
+#if defined(__QNX__)
+      Ogre::GLES2Plugin* gles2_plugin;
+      Ogre::ParticleFXPlugin* pfx_plugin;
+      Ogre::BspSceneManagerPlugin* bsp_scene_man_plugin;
+      Ogre::OctreePlugin* octree_scene_man_plugin;
+
+      private: size_t wl_display_;
+      private: size_t wl_surface_;
+#else
       private: uint64_t dummyWindowId = 0u;
+#endif
 
       /// \brief True to use the current opengl context
       private: bool useCurrentGLContext = false;

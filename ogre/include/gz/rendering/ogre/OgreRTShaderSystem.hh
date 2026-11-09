@@ -30,6 +30,10 @@ namespace gz
   namespace rendering
   {
     inline namespace GZ_RENDERING_VERSION_NAMESPACE {
+#ifdef __QNX__
+    class SGTechniqueResolverListener;
+#endif
+
     //
     // forward declaration
     class OgreRTShaderSystemPrivate;

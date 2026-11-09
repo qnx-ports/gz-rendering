@@ -25,7 +25,11 @@
 #endif
 // leave this out of OgreIncludes as it conflicts with other files requiring
 // gl.h
+#ifdef __QNX__
+#include <OgreGLES2FBORenderTexture.h>
+#else
 #include <OgreGLFBORenderTexture.h>
+#endif
 #ifndef _WIN32
 # pragma GCC diagnostic pop
 #else

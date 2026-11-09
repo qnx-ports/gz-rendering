@@ -240,7 +240,11 @@ void OgreVisual::BoundsHelper(gz::math::AxisAlignedBox &_box,
       gz::math::AxisAlignedBox box(min, max);
 
       // Ogre does not return a valid bounding box for lights.
+#ifdef __QNX__
+      if (obj->getMovableType() == "Light")
+#else
       if (obj->getMovableType() == Ogre::LightFactory::FACTORY_TYPE_NAME)
+#endif
       {
         box.Min() = gz::math::Vector3d(-0.5, -0.5, -0.5);
         box.Max()  = gz::math::Vector3d(0.5, 0.5, 0.5);

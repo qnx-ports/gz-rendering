@@ -19,6 +19,9 @@
   #define GL_SILENCE_DEPRECATION
   #include <OpenGL/gl.h>
   #include <OpenGL/glext.h>
+#elif __QNX__
+  #include <GLES2/gl2.h>
+  #include <GLES2/gl2ext.h>
 #else
 #ifndef _WIN32
   #include <GL/gl.h>
@@ -623,7 +626,7 @@ void OgreWideAngleCamera::notifyMaterialRender(Ogre::uint32 /*_pass_id*/,
     this->AspectRatio(),
     this->HFOV().Radian());
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__QNX__)
   // OGRE doesn't allow to enable cubemap filtering extention thru its API
   // suppose that this function was invoked in a thread that has OpenGL context
   glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);

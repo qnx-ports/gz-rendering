@@ -53,6 +53,10 @@
 #include "gz/rendering/ogre/OgreWideAngleCamera.hh"
 #include "gz/rendering/ogre/OgreWireBox.hh"
 
+#ifdef __QNX__
+#include <OgreDeprecated.h>
+#endif
+
 namespace gz
 {
   namespace rendering
