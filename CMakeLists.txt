@@ -69,8 +69,7 @@ if (APPLE)
     PKGCONFIG gl)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "QNX")
   gz_find_package(OpenGL REQUIRED
-    COMPONENTS GLES2
-    OPTIONAL_COMPONENTS EGL
+    COMPONENTS GLES2 EGL
     REQUIRED_BY ogre ogre2)
 else()
   gz_find_package(OpenGL REQUIRED
