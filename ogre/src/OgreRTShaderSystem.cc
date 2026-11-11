@@ -832,7 +832,7 @@ void OgreRTShaderSystem::ApplyShadows(OgreScenePtr _scene)
   const Ogre::PSSMShadowCameraSetup::SplitPointList &srcSplitPoints =
     cameraSetup->getSplitPoints();
 
-#ifdef__QNX__
+#ifdef __QNX__
   std::vector<float> dstSplitPoints;
 #else
   Ogre::RTShader::IntegratedPSSM3::SplitPointList dstSplitPoints;
