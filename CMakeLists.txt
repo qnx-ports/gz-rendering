@@ -88,9 +88,57 @@ endif()
 list(APPEND gz_ogre_components "RTShaderSystem" "Terrain" "Overlay" "Paging")
 
 if (CMAKE_SYSTEM_NAME STREQUAL "QNX")
-	# The GzOGRE find module practically hardcodes the version,
-	# so it's stubbed out.
+	if(OGRE_PREFIX_DIR)
+		set(_ogre_prefix "${OGRE_PREFIX_DIR}")
+	elseif(OGRE_DIR)
+		get_filename_component(_ogre_prefix "${OGRE_DIR}/../../.." ABSOLUTE)
+	else()
+		message(FATAL_ERROR
+			"QNX gz-rendering needs -DOGRE_DIR or -DOGRE_PREFIX_DIR")
+	endif()
+
+	set(_ogre_lib_hints
+		"${_ogre_prefix}/lib"
+		"${_ogre_prefix}/lib/OGRE")
+
+	set(_ogre_components
+		OgreMain
+		OgreRTShaderSystem
+		OgreTerrain
+		OgreOverlay
+		OgrePaging
+		OgreVolume)
+	set(_ogre_plugins
+		RenderSystem_GLES2
+		Plugin_ParticleFX
+		Plugin_BSPSceneManager
+		Plugin_OctreeSceneManager)
+
+	set(GZOGRE_LIBRARIES "")
+	foreach(_ogre_name IN LISTS _ogre_components)
+		find_library(GZOGRE_LIB_${_ogre_name} NAMES ${_ogre_name}
+			HINTS ${_ogre_lib_hints}
+			NO_DEFAULT_PATH)
+		if(NOT GZOGRE_LIB_${_ogre_name})
+			message(FATAL_ERROR
+				"Could not find Ogre library ${_ogre_name} under ${_ogre_prefix}")
+		endif()
+		list(APPEND GZOGRE_LIBRARIES "${GZOGRE_LIB_${_ogre_name}}")
+	endforeach()
+	foreach(_ogre_name IN LISTS _ogre_plugins)
+		find_library(GZOGRE_LIB_${_ogre_name} NAMES ${_ogre_name}.so
+			HINTS "${_ogre_prefix}/lib/OGRE"
+			NO_DEFAULT_PATH)
+		if(NOT GZOGRE_LIB_${_ogre_name})
+			message(FATAL_ERROR
+				"Could not find Ogre plugin ${_ogre_name}.so under ${_ogre_prefix}/lib/OGRE")
+		endif()
+		list(APPEND GZOGRE_LIBRARIES "${GZOGRE_LIB_${_ogre_name}}")
+	endforeach()
+
+	set(GZOGRE_INCLUDE_DIRS "${_ogre_prefix}/include/OGRE")
 	set(OGRE_FOUND TRUE)
+	set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 else()
 	gz_find_package(GzOGRE VERSION 1.9.0
 		COMPONENTS ${gz_ogre_components}
