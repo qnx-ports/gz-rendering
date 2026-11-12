@@ -1,9 +1,9 @@
-vertex_program GpuRaysScan1stVS glsl
+vertex_program GpuRaysScan1stVS glsl glsles
 {
   source gpu_rays_1st_pass_vs.glsl
 }
 
-fragment_program GpuRaysScan1stFS glsl
+fragment_program GpuRaysScan1stFS glsl glsles
 {
   source gpu_rays_1st_pass_fs.glsl
 
@@ -31,12 +31,12 @@ material GpuRaysScan1st
   }
 }
 
-vertex_program GpuRaysScan2ndVS glsl
+vertex_program GpuRaysScan2ndVS glsl glsles
 {
   source gpu_rays_2nd_pass_vs.glsl
 }
 
-fragment_program GpuRaysScan2ndFS glsl
+fragment_program GpuRaysScan2ndFS glsl glsles
 {
   source gpu_rays_2nd_pass_fs.glsl
 

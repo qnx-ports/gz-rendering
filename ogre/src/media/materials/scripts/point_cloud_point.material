@@ -1,5 +1,5 @@
 
-vertex_program PointCloudVS glsl
+vertex_program PointCloudVS glsl glsles
 {
   source point_vs.glsl
 
@@ -10,7 +10,7 @@ vertex_program PointCloudVS glsl
   }
 }
 
-fragment_program PointCloudFS glsl
+fragment_program PointCloudFS glsl glsles
 {
   source point_fs.glsl
 }

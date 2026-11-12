@@ -1,3 +1,6 @@
+OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
+#include "OgreUnifiedShader.h"
+
 /*
  * Copyright (C) 2019 Open Source Robotics Foundation
  *
@@ -17,8 +20,12 @@
 
 // Simple vertex shader; just setting things up for the real work to be done in
 // gaussian_noise_fs.glsl.
-void main()
+MAIN_PARAMETERS
+IN(vec4 pos, POSITION)
+IN(vec4 uv, TEXCOORD0);
+OUT(vec4 v_texcoord, 0)
+MAIN_DECLARATION
 {
-  gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
-  gl_TexCoord[0] = gl_MultiTexCoord0;
+  gl_Position = gl_ModelViewProjectionMatrix * pos;
+  v_texcoord = uv;
 }

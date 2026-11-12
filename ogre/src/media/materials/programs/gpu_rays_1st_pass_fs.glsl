@@ -1,3 +1,6 @@
+OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
+#include "OgreUnifiedShader.h"
+
 uniform float retro;
 
 uniform float near;
@@ -5,9 +8,9 @@ uniform float far;
 uniform float max;
 uniform float min;
 
-varying vec4 point;
-
-void main()
+MAIN_PARAMETERS
+IN(vec4 point, 0)
+MAIN_DECLARATION
 {
   float l = length(point.xyz);
 

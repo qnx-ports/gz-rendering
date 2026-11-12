@@ -1,6 +1,9 @@
-#version 120
+OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
+#include "OgreUnifiedShader.h"
 
-void main()
+MAIN_PARAMETERS
+IN(vec4 v_frontColor, 0)
+MAIN_DECLARATION
 {
-  gl_FragColor = gl_Color;
+  gl_FragColor = v_frontColor;
 }

@@ -1,3 +1,6 @@
+OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
+#include "OgreUnifiedShader.h"
+
 /*
  * Copyright (C) 2019 Open Source Robotics Foundation
  *
@@ -20,9 +23,9 @@ uniform vec4 inColor;
 uniform float near;
 uniform float far;
 
-varying vec4 eyePos;
-
-void main()
+MAIN_PARAMETERS
+IN(vec4 eyePos, 0)
+MAIN_DECLARATION
 {
   // get depth, convert to z up
   float d = -eyePos.z;

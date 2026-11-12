@@ -1,9 +1,13 @@
-varying vec4 point;
+OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
+#include "OgreUnifiedShader.h"
 
-void main()
+MAIN_PARAMETERS
+IN(vec4 pos, POSITION)
+OUT(vec4 point, 0)
+MAIN_DECLARATION
 {
   gl_Position = ftransform();
 
   // Vertex in world space
-  point = gl_ModelViewMatrix * gl_Vertex;
+  point = gl_ModelViewMatrix * pos;
 }
