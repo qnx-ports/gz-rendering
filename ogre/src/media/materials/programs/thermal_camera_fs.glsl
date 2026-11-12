@@ -1,3 +1,6 @@
+OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
+#include "OgreUnifiedShader.h"
+
 /*
  * Copyright (C) 2019 Open Source Robotics Foundation
  *
@@ -23,16 +26,17 @@ uniform float resolution;
 uniform float heatSourceTempRange;
 uniform sampler2D heatTexture;
 
-varying vec4 eyePos;
-
-void main()
+MAIN_PARAMETERS
+IN(vec4 eyePos, 0)
+IN(vec4 v_texcoord, 1)
+MAIN_DECLARATION
 {
   // temperature defaults to ambient
   float temp = ambient;
   float heatRange = range;
 
   // check for heat source
-  vec4 sample = texture2D(heatTexture, gl_TexCoord[0].xy);
+  vec4 sample = texture2D(heatTexture, v_texcoord.xy);
   float heat = sample.x;
   float valid = sample.y;
   float d = 1.0;

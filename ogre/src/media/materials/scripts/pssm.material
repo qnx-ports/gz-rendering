@@ -1,4 +1,4 @@
-vertex_program shadow_caster_vp_glsl glsl
+vertex_program shadow_caster_vp_glsl glsl glsles
 {
   source shadow_caster_vp.glsl
 
@@ -9,7 +9,7 @@ vertex_program shadow_caster_vp_glsl glsl
   }
 }
 
-fragment_program shadow_caster_fp_glsl glsl
+fragment_program shadow_caster_fp_glsl glsl glsles
 {
   source shadow_caster_fp.glsl
 

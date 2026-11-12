@@ -15,12 +15,12 @@
  *
  */
 
-vertex_program CameraDistortionMapVS glsl
+vertex_program CameraDistortionMapVS glsl glsles
 {
   source camera_distortion_map_vs.glsl
 }
 
-fragment_program CameraDistortionMapFS glsl
+fragment_program CameraDistortionMapFS glsl glsles
 {
   source camera_distortion_map_fs.glsl
   default_params

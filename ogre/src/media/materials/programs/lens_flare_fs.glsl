@@ -1,3 +1,6 @@
+OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
+#include "OgreUnifiedShader.h"
+
 /*
  * Copyright (C) 2022 Open Source Robotics Foundation
  *
@@ -70,12 +73,14 @@ vec3 lensflare(vec2 uv,vec2 pos)
   return c;
 }
 
-void main()
+MAIN_PARAMETERS
+IN(vec4 v_texcoord, 0)
+MAIN_DECLARATION
 {
   if (lightPos.z < 0.0)
   {
     // light is behind the view
-    gl_FragColor = texture2D(srcTex, gl_TexCoord[0].xy);
+    gl_FragColor = texture2D(srcTex, v_texcoord.xy);
   }
   else
   {
@@ -84,7 +89,7 @@ void main()
     // flip y
     pos.y *= -1.0;
 
-    vec2 uv = gl_TexCoord[0].xy - 0.5;
+    vec2 uv = v_texcoord.xy - 0.5;
     // scale lightPos to be same range as uv
     pos *= 0.5;
     // fix aspect ratio
@@ -95,7 +100,7 @@ void main()
     vec3 finalColor = color * lensflare(uv, pos.xy);
 
     // apply lens flare
-    gl_FragColor = texture2D(srcTex, gl_TexCoord[0].xy) +
+    gl_FragColor = texture2D(srcTex, v_texcoord.xy) +
                    vec4(finalColor, 1.0);
   }
 }

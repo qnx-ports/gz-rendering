@@ -1,3 +1,6 @@
+OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
+#include "OgreUnifiedShader.h"
+
 /*
  * Copyright (C) 2019 Open Source Robotics Foundation
  *
@@ -110,10 +113,12 @@ vec4 gaussrand(vec2 co)
   return vec4(Z, Z, Z, 0.0);
 }
 
-void main()
+MAIN_PARAMETERS
+IN(vec4 v_texcoord, 0)
+MAIN_DECLARATION
 {
   // Add the sampled noise to the input color and clamp the result to a valid
   // range.
-  gl_FragColor = clamp(texture2D(RT, gl_TexCoord[0].xy) +
-    gaussrand(gl_TexCoord[0].xy), 0.0, 1.0);
+  gl_FragColor = clamp(texture2D(RT, v_texcoord.xy) +
+    gaussrand(v_texcoord.xy), 0.0, 1.0);
 }

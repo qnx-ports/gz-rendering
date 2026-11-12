@@ -15,12 +15,12 @@
  *
  */
 
-vertex_program LensFlareVS glsl
+vertex_program LensFlareVS glsl glsles
 {
   source lens_flare_vs.glsl
 }
 
-fragment_program LensFlareFS glsl
+fragment_program LensFlareFS glsl glsles
 {
   source lens_flare_fs.glsl
 

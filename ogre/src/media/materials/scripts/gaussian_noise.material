@@ -15,12 +15,12 @@
  *
  */
 
-vertex_program GaussianNoiseVS glsl
+vertex_program GaussianNoiseVS glsl glsles
 {
   source gaussian_noise_vs.glsl
 }
 
-fragment_program GaussianNoiseFS glsl
+fragment_program GaussianNoiseFS glsl glsles
 {
   source gaussian_noise_fs.glsl
   default_params

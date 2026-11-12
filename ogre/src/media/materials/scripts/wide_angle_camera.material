@@ -1,4 +1,4 @@
-vertex_program WideLensMapVS glsl
+vertex_program WideLensMapVS glsl glsles
 {
   source wide_lens_map_vs.glsl
   default_params
@@ -7,7 +7,7 @@ vertex_program WideLensMapVS glsl
   }
 }
 
-fragment_program WideLensMapFS glsl
+fragment_program WideLensMapFS glsl glsles
 {
   source wide_lens_map_fp.glsl
   default_params
