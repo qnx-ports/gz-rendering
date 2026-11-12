@@ -1,4 +1,4 @@
-vertex_program heat_source_vs glsl
+vertex_program heat_source_vs glsl glsles
 {
   source depth_points_vs.glsl
 
@@ -7,7 +7,7 @@ vertex_program heat_source_vs glsl
   }
 }
 
-fragment_program heat_source_fs glsl
+fragment_program heat_source_fs glsl glsles
 {
   source heat_source_fs.glsl
 
@@ -44,7 +44,7 @@ material ThermalHeatSource
 
 
 
-vertex_program ThermalCameraVS glsl
+vertex_program ThermalCameraVS glsl glsles
 {
   source depth_points_vs.glsl
   default_params
@@ -52,7 +52,7 @@ vertex_program ThermalCameraVS glsl
   }
 }
 
-fragment_program ThermalCameraFS glsl
+fragment_program ThermalCameraFS glsl glsles
 {
   source thermal_camera_fs.glsl
 

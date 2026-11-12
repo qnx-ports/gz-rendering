@@ -1,3 +1,6 @@
+OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
+#include "OgreUnifiedShader.h"
+
 /*
  * Copyright (C) 2019 Open Source Robotics Foundation
  *
@@ -15,9 +18,9 @@
  *
 */
 
-varying vec4 eyePos;
-
-void main()
+MAIN_PARAMETERS
+IN(vec4 eyePos, 0)
+MAIN_DECLARATION
 {
   // convert to z up
   gl_FragColor = vec4(-eyePos.z, -eyePos.x, eyePos.y, 1.0);

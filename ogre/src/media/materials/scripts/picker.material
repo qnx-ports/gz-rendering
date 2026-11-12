@@ -1,4 +1,4 @@
-vertex_program plaincolor_vs glsl
+vertex_program plaincolor_vs glsl glsles
 {
   source plain_color_vs.glsl
 
@@ -8,7 +8,7 @@ vertex_program plaincolor_vs glsl
   }
 }
 
-fragment_program plaincolor_fs glsl
+fragment_program plaincolor_fs glsl glsles
 {
   source plain_color_fs.glsl
 

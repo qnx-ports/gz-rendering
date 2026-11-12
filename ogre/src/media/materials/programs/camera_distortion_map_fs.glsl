@@ -1,3 +1,6 @@
+OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
+#include "OgreUnifiedShader.h"
+
 /*
  * Copyright (C) 2021 Open Source Robotics Foundation
  *
@@ -24,10 +27,12 @@ uniform sampler2D distortionMap;
 // Scale the input texture if necessary to crop black border
 uniform vec3 scale;
 
-void main()
+MAIN_PARAMETERS
+IN(vec4 v_texcoord, 0)
+MAIN_DECLARATION
 {
   vec2 scaleCenter = vec2(0.5, 0.5);
-  vec2 inputUV = (gl_TexCoord[0].xy - scaleCenter) / scale.xy + scaleCenter;
+  vec2 inputUV = (v_texcoord.xy - scaleCenter) / scale.xy + scaleCenter;
   vec4 mapUV = texture2D(distortionMap, inputUV);
 
   if (mapUV.x < 0.0 || mapUV.y < 0.0)

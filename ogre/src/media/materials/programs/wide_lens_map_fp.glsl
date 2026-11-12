@@ -1,4 +1,5 @@
-#version 120
+OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
+#include "OgreUnifiedShader.h"
 
 uniform samplerCube envMap;
 
@@ -20,8 +21,6 @@ uniform float c3;
 // depends on the type of math function sin (X), tan (Y), or identity (Z)
 uniform vec3 fun;
 
-varying vec2 frag_pos;
-
 float pi = 3.141592653;
 float r = length(frag_pos);
 
@@ -31,7 +30,9 @@ vec3 map(float th)
   return vec3(-sin(th)*frag_pos.x/r, sin(th)*frag_pos.y/r, cos(th));
 }
 
-void main()
+MAIN_PARAMETERS
+IN(vec2 frag_pos, 0)
+MAIN_DECLARATION
 {
   // calculate angle from optical axis based on the mapping function specified
   float param = r/(c1*f);

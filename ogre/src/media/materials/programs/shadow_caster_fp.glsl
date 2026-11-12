@@ -1,7 +1,11 @@
-// uniform vec4 depth_range;
-varying vec4 vertex_depth;
+OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
+#include "OgreUnifiedShader.h"
 
-void main()
+// uniform vec4 depth_range;
+
+MAIN_PARAMETERS
+IN(vec4 vertex_depth, 0)
+MAIN_DECLARATION
 {
   float depth = (vertex_depth.z) / vertex_depth.w;
 

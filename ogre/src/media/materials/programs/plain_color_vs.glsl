@@ -1,3 +1,6 @@
+OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
+#include "OgreUnifiedShader.h"
+
 // Model Level Inputs
 uniform mat4 worldViewProj;
 
@@ -9,13 +12,17 @@ uniform mat4 worldViewProj;
 // out vec4 oPosition;
 // out vec2 uv0;
 
-void main()
+MAIN_PARAMETERS
+IN(vec4 pos, POSITION)
+IN(vec4 uv, TEXCOORD0);
+OUT(vec4 v_texcoord, 0)
+MAIN_DECLARATION
 {
   // Calculate output position
   //oPosition = worldViewProj * position;
-  gl_Position = worldViewProj * gl_Vertex;
+  gl_Position = worldViewProj * pos;
  
   // Simply copy the input vertex UV to the output
   //uv0 = texCoord0;
-  gl_TexCoord[0] = gl_MultiTexCoord0;
+  v_texcoord = uv;
 }

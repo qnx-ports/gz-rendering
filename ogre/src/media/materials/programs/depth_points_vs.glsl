@@ -1,3 +1,6 @@
+OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
+#include "OgreUnifiedShader.h"
+
 /*
  * Copyright (C) 2019 Open Source Robotics Foundation
  *
@@ -15,12 +18,15 @@
  *
 */
 
-varying vec4 eyePos;
-
-void main()
+MAIN_PARAMETERS
+IN(vec4 pos, POSITION)
+IN(vec4 uv, TEXCOORD0);
+OUT(vec4 eyePos, 0)
+OUT(vec4 v_texcoord, 1)
+MAIN_DECLARATION
 {
   gl_Position = ftransform();
-  eyePos = gl_ModelViewMatrix * gl_Vertex;
-  gl_TexCoord[0] = gl_MultiTexCoord0;
+  eyePos = gl_ModelViewMatrix * pos;
+  v_texcoord = uv;
 }
 
