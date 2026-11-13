@@ -39,19 +39,34 @@ set_property(
   OGRE_RESOURCE_PATH="${OGRE_RESOURCE_PATH}"
 )
 
-target_link_libraries(${ogre_target}
-  PUBLIC
-    ${gz-common${GZ_COMMON_VER}_LIBRARIES}
-  PRIVATE
-    gz-plugin${GZ_PLUGIN_VER}::register
-    ${OPENGL_LIBRARIES}
-    ${GZOGRE_LIBRARIES}
-    Qt::Core
-    Qt::Gui
-    Qt::GuiPrivate
-    Qt::Widgets
-    )
-target_include_directories(${ogre_target} PRIVATE ${GZOGRE_INCLUDE_DIRS})
+if (CMAKE_SYSTEM_NAME STREQUAL "QNX")
+  target_link_libraries(${ogre_target}
+    PUBLIC
+      ${gz-common${GZ_COMMON_VER}_LIBRARIES}
+    PRIVATE
+      gz-plugin${GZ_PLUGIN_VER}::register
+      ${OPENGL_LIBRARIES}
+      ${GZOGRE_LIBRARIES}
+      ${Qt5Core_LIBRARIES}
+      ${Qt5Gui_LIBRARIES}
+      ${Qt5Widgets_LIBRARIES}
+      )
+  target_include_directories(${ogre_target}
+    PRIVATE
+      ${GZOGRE_INCLUDE_DIRS}
+      ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
+      )
+else()
+  target_link_libraries(${ogre_target}
+    PUBLIC
+      ${gz-common${GZ_COMMON_VER}_LIBRARIES}
+    PRIVATE
+      gz-plugin${GZ_PLUGIN_VER}::register
+      ${OPENGL_LIBRARIES}
+      ${GZOGRE_LIBRARIES}
+      )
+  target_include_directories(${ogre_target} PRIVATE ${GZOGRE_INCLUDE_DIRS})
+endif()
 
 # Build the unit tests
 gz_build_tests(TYPE UNIT

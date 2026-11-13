@@ -72,18 +72,13 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "QNX")
     COMPONENTS GLES2
     OPTIONAL_COMPONENTS EGL
     REQUIRED_BY ogre ogre2)
-  set(QT_MAJOR_VERSION 6)
-  set(QT_MINOR_VERSION 4)
-  gz_find_package (Qt${QT_MAJOR_VERSION}
-    VERSION ${QT_MAJOR_VERSION}.${QT_MINOR_VERSION}
+  gz_find_package (Qt5
     COMPONENTS
       Core
       Gui
-      GuiPrivate
       Widgets
     REQUIRED
-    PKGCONFIG_VER_COMPARISON >=
-    PKGCONFIG "Qt${QT_MAJOR_VERSION}Core Qt${QT_MAJOR_VERSION}Gui Qt${QT_MAJOR_VERSION}GuiPrivate Qt${QT_MAJOR_VERSION}Widgets")
+    PKGCONFIG "Qt5Core Qt5Gui Qt5Widgets")
 else()
   gz_find_package(OpenGL REQUIRED
     COMPONENTS OpenGL
