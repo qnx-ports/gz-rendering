@@ -18,6 +18,9 @@ OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
  *
 */
 
+uniform mat4 worldView;
+uniform mat4 worldViewProj;
+
 MAIN_PARAMETERS
 IN(vec4 pos, POSITION)
 IN(vec4 uv, TEXCOORD0);
@@ -25,8 +28,8 @@ OUT(vec4 eyePos, 0)
 OUT(vec4 v_texcoord, 1)
 MAIN_DECLARATION
 {
-  gl_Position = ftransform();
-  eyePos = gl_ModelViewMatrix * pos;
+  gl_Position = worldViewProj * pos;
+  eyePos = worldView * pos;
   v_texcoord = uv;
 }
 

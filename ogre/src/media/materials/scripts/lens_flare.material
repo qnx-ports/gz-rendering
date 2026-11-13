@@ -18,6 +18,10 @@
 vertex_program LensFlareVS glsl glsles
 {
   source lens_flare_vs.glsl
+  default_params
+  {
+    param_named_auto worldViewProj worldviewproj_matrix
+  }
 }
 
 fragment_program LensFlareFS glsl glsles

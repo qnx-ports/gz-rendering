@@ -4,6 +4,8 @@ vertex_program heat_source_vs glsl glsles
 
   default_params
   {
+    param_named_auto worldView worldview_matrix
+    param_named_auto worldViewProj worldviewproj_matrix
   }
 }
 
@@ -49,6 +51,8 @@ vertex_program ThermalCameraVS glsl glsles
   source depth_points_vs.glsl
   default_params
   {
+    param_named_auto worldView worldview_matrix
+    param_named_auto worldViewProj worldviewproj_matrix
   }
 }
 

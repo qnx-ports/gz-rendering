@@ -18,6 +18,10 @@
 vertex_program CameraDistortionMapVS glsl glsles
 {
   source camera_distortion_map_vs.glsl
+  default_params
+  {
+    param_named_auto worldViewProj worldviewproj_matrix
+  }
 }
 
 fragment_program CameraDistortionMapFS glsl glsles

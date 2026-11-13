@@ -18,6 +18,10 @@
 vertex_program GaussianNoiseVS glsl glsles
 {
   source gaussian_noise_vs.glsl
+  default_params
+  {
+    param_named_auto worldViewProj worldviewproj_matrix
+  }
 }
 
 fragment_program GaussianNoiseFS glsl glsles

@@ -36,12 +36,12 @@ MAIN_DECLARATION
   float heatRange = range;
 
   // check for heat source
-  vec4 sample = texture2D(heatTexture, v_texcoord.xy);
-  float heat = sample.x;
-  float valid = sample.y;
+  vec4 sample_ = texture2D(heatTexture, v_texcoord.xy);
+  float heat = sample_.x;
+  float valid = sample_.y;
   float d = 1.0;
   if (valid == 1.0)
-    d = sample.z;
+    d = sample_.z;
   if (heat > 0.0)
   {
     // heat is normalized so convert back to work in kelvin

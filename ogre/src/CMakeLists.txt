@@ -46,6 +46,10 @@ target_link_libraries(${ogre_target}
     gz-plugin${GZ_PLUGIN_VER}::register
     ${OPENGL_LIBRARIES}
     ${GZOGRE_LIBRARIES}
+    Qt::Core
+    Qt::Gui
+    Qt::GuiPrivate
+    Qt::Widgets
     )
 target_include_directories(${ogre_target} PRIVATE ${GZOGRE_INCLUDE_DIRS})
 

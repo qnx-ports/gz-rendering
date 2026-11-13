@@ -10,11 +10,11 @@ uniform float size;
 
 MAIN_PARAMETERS
 IN(vec4 pos, POSITION)
-IN(vec4 a_color, COLOUR)
+IN(vec4 a_color, COLOR)
 OUT(vec4 v_frontColor, 0)
 MAIN_DECLARATION
 {
-  gl_Position = worldviewproj_matrix * gl_Vertex;
+  gl_Position = worldviewproj_matrix * pos;
   v_frontColor = a_color;
   gl_PointSize = size;
 }
