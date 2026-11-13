@@ -18,6 +18,8 @@ OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
  *
  */
 
+uniform mat4 worldViewProj;
+
 // Simple vertex shader; just setting things up for the real work to be done in
 // gaussian_noise_fs.glsl.
 MAIN_PARAMETERS
@@ -26,6 +28,6 @@ IN(vec4 uv, TEXCOORD0);
 OUT(vec4 v_texcoord, 0)
 MAIN_DECLARATION
 {
-  gl_Position = gl_ModelViewProjectionMatrix * pos;
+  gl_Position = worldViewProj * pos;
   v_texcoord = uv;
 }

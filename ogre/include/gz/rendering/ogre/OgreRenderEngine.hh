@@ -36,6 +36,9 @@
 #include <OgreParticleFXPlugin.h>
 #include <OgreBspSceneManagerPlugin.h>
 #include <OgreOctreePlugin.h>
+
+#include <qapplication.h>
+#include <qwindow.h>
 #endif
 
 namespace Ogre
@@ -192,6 +195,8 @@ namespace gz
       Ogre::BspSceneManagerPlugin* bsp_scene_man_plugin;
       Ogre::OctreePlugin* octree_scene_man_plugin;
 
+      private: QApplication *dummyApp;
+      private: QWindow *dummyWindow;
       private: size_t wl_display_;
       private: size_t wl_surface_;
 #else

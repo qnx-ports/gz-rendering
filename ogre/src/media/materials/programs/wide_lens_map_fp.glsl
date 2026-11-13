@@ -1,7 +1,7 @@
 OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
 #include "OgreUnifiedShader.h"
 
-uniform samplerCube envMap;
+SAMPLERCUBE(envMap, 0);
 
 uniform float cutOffAngle;
 
@@ -22,9 +22,8 @@ uniform float c3;
 uniform vec3 fun;
 
 float pi = 3.141592653;
-float r = length(frag_pos);
 
-vec3 map(float th)
+vec3 map(float th, vec2 frag_pos, float r)
 {
   // spherical to cartesian conversion
   return vec3(-sin(th)*frag_pos.x/r, sin(th)*frag_pos.y/r, cos(th));
@@ -35,21 +34,22 @@ IN(vec2 frag_pos, 0)
 MAIN_DECLARATION
 {
   // calculate angle from optical axis based on the mapping function specified
+  float r = length(frag_pos);
   float param = r/(c1*f);
   float theta = 0.0;
-  if (fun.x > 0)
+  if (fun.x > 0.0)
     theta = asin(param);
-  else if (fun.y > 0)
+  else if (fun.y > 0.0)
     theta = atan(param);
-  else if (fun.z > 0)
+  else if (fun.z > 0.0)
     theta = param;
   theta = (theta-c3)*c2;
 
   // compute the direction vector that will be used to sample from the cubemap
-  vec3 tc = map(theta);
+  vec3 tc = map(theta, frag_pos, r);
 
   // sample and set resulting color
-  gl_FragColor = vec4(textureCube(envMap, tc).rgb, 1);
+  gl_FragColor = vec4(texture(envMap, tc).rgb, 1);
 
   // limit to visible fov
   //TODO: move to vertex shader

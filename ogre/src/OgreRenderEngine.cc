@@ -36,6 +36,13 @@ typedef khronos_intptr_t GLintptr;
   #include <Winsock2.h>
 #endif
 
+#ifdef __QNX__
+#include <QGuiApplication>
+#include <qpa/qplatformnativeinterface.h>
+
+#include <sys/process.h>
+#endif
+
 #include <dlfcn.h>
 
 # include <filesystem>
@@ -130,6 +137,8 @@ OgreRenderEngine::OgreRenderEngine() :
   pfx_plugin(nullptr),
   bsp_scene_man_plugin(nullptr),
   octree_scene_man_plugin(nullptr),
+  dummyApp(nullptr),
+  dummyWindow(nullptr),
   wl_display_(0),
   wl_surface_(0),
 #endif
@@ -169,17 +178,23 @@ OgreRenderEngine::OgreRenderEngine() :
 OgreRenderEngine::~OgreRenderEngine()
 {
 #ifdef __QNX__
-  if (gles2_plugin != nullptr) {
-    delete gles2_plugin;
+  if (this->gles2_plugin != nullptr) {
+    delete this->gles2_plugin;
   }
-  if (pfx_plugin != nullptr) {
-    delete pfx_plugin;
+  if (this->pfx_plugin != nullptr) {
+    delete this->pfx_plugin;
   }
-  if (bsp_scene_man_plugin != nullptr) {
-    delete bsp_scene_man_plugin;
+  if (this->bsp_scene_man_plugin != nullptr) {
+    delete this->bsp_scene_man_plugin;
   }
-  if (octree_scene_man_plugin != nullptr) {
-    delete octree_scene_man_plugin;
+  if (this->octree_scene_man_plugin != nullptr) {
+    delete this->octree_scene_man_plugin;
+  }
+  if (this->dummyWindow != nullptr) {
+    delete this->dummyWindow;
+  }
+  if (this->dummyApp != nullptr) {
+    delete this->dummyApp;
   }
 #endif
 }
@@ -456,7 +471,31 @@ void OgreRenderEngine::CreateLogger()
 //////////////////////////////////////////////////
 void OgreRenderEngine::CreateContext()
 {
-#if (!defined(__APPLE__) && !defined(_WIN32) && !defined(__QNX__))
+#if defined(__QNX__)
+  // Gazebo expects an existing surface on window creation when rendering to wl.
+  if ((wl_display_ == 0) || (wl_surface_ == 0))
+  {
+    if ((QCoreApplication::instance() == nullptr) && (this->dummyApp == nullptr)) {
+      int argc = 1;
+      char* argv[] = { (char *)getprogname() };
+      this->dummyApp = new QApplication(argc, argv);
+    }
+    if (this->dummyWindow != nullptr) {
+      delete this->dummyWindow;
+    }
+    this->dummyWindow = new QWindow();
+    this->dummyWindow->resize(1,1);
+    this->dummyWindow->show();
+
+    auto *qt_wl_context = QGuiApplication::platformNativeInterface();
+    if (qt_wl_context == nullptr) {
+      gzwarn << "Failed to retrieve qt wayland context!!" << std::endl;
+    } else {
+      wl_display_ = reinterpret_cast<size_t>(qt_wl_context->nativeResourceForWindow("display", this->dummyWindow));
+      wl_surface_ = reinterpret_cast<size_t>(qt_wl_context->nativeResourceForWindow("surface", this->dummyWindow));
+    }
+  }
+#elif (!defined(__APPLE__) && !defined(_WIN32))
   // create X11 display
   this->dummyDisplay = XOpenDisplay(0);
   Display *x11Display = static_cast<Display*>(this->dummyDisplay);

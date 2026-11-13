@@ -4,6 +4,7 @@ vertex_program WideLensMapVS glsl glsles
   default_params
   {
     param_named ratio float 1
+    param_named_auto worldViewProj worldviewproj_matrix
   }
 }
 
