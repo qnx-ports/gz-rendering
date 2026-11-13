@@ -31,6 +31,8 @@
 #ifdef __QNX__
 #include <QGuiApplication>
 #include <qpa/qplatformnativeinterface.h>
+#include <OgreSTBICodec.h>
+#include <OgreFreeImageCodec.h>
 
 #include <sys/process.h>
 #endif
@@ -507,6 +509,8 @@ void OgreRenderEngine::LoadPlugins()
   this->ogreRoot->installPlugin(bsp_scene_man_plugin);
   octree_scene_man_plugin = new Ogre::OctreePlugin();
   this->ogreRoot->installPlugin(octree_scene_man_plugin);
+  Ogre::STBIImageCodec::startup();
+  Ogre::FreeImageCodec::startup();
 #else
   for (auto iter = this->ogrePaths.begin();
        iter != this->ogrePaths.end(); ++iter)
