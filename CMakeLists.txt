@@ -119,7 +119,9 @@ if (CMAKE_SYSTEM_NAME STREQUAL "QNX")
 		RenderSystem_GLES2
 		Plugin_ParticleFX
 		Plugin_BSPSceneManager
-		Plugin_OctreeSceneManager)
+		Plugin_OctreeSceneManager
+		Codec_STBI
+		Codec_FreeImage)
 
 	set(GZOGRE_LIBRARIES "")
 	foreach(_ogre_name IN LISTS _ogre_components)
