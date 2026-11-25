@@ -570,7 +570,7 @@ void OgreGpuRays::UpdateRenderTarget(Ogre::RenderTarget *_target,
   // Need this line to render the ground plane. No idea why it's necessary.
   renderSys->_setViewport(vp);
 #ifdef __QNX__
-  sceneMgr->_setPass(pass, true);
+  sceneMgr->_setPass(pass, false);
 #else
   sceneMgr->_setPass(pass, true, false);
 #endif
@@ -603,19 +603,25 @@ void OgreGpuRays::UpdateRenderTarget(Ogre::RenderTarget *_target,
   if (pass->hasVertexProgram())
   {
     renderSys->bindGpuProgram(
-        pass->getVertexProgram()->_getBindingDelegate());
-
-    renderSys->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM,
-    pass->getVertexProgramParameters(), 1);
+      pass->getVertexProgram()->_getBindingDelegate());
   }
 
   if (pass->hasFragmentProgram())
   {
     renderSys->bindGpuProgram(
-    pass->getFragmentProgram()->_getBindingDelegate());
+      pass->getFragmentProgram()->_getBindingDelegate());
+  }
 
+  if (pass->hasVertexProgram())
+  {
+    renderSys->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM,
+      pass->getVertexProgramParameters(), 1);
+  }
+
+  if (pass->hasFragmentProgram())
+  {
     renderSys->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM,
-    pass->getFragmentProgramParameters(), 1);
+      pass->getFragmentProgramParameters(), 1);
   }
 
   _target->update(false);
@@ -1008,12 +1014,12 @@ void OgreGpuRays::notifyRenderSingleObject(Ogre::Renderable *_rend,
   renderSys->bindGpuProgram(
       pass->getVertexProgram()->_getBindingDelegate());
 
+  renderSys->bindGpuProgram(
+      pass->getFragmentProgram()->_getBindingDelegate());
+
   renderSys->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM,
       pass->getVertexProgramParameters(),
       Ogre::GPV_GLOBAL | Ogre::GPV_PER_OBJECT);
-
-  renderSys->bindGpuProgram(
-      pass->getFragmentProgram()->_getBindingDelegate());
 
   renderSys->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM,
       pass->getFragmentProgramParameters(),

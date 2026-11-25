@@ -120,8 +120,26 @@ Ogre::Technique * SGTechniqueResolverListener::handleSchemeNotFound(
   const Ogre::Renderable * rend)
 {
   (void) scheme_index;
-  (void) lod_index;
   (void) rend;
+
+  // Don't generate a shader for this scheme if we have a shader for the default
+  // scheme.
+  for (auto *tech : original_material->getSupportedTechniques()) {
+    if ((tech->getSchemeName() == Ogre::MaterialManager::DEFAULT_SCHEME_NAME)
+      && (tech->getLodIndex() == lod_index)
+      && (tech->getNumPasses() > 0)) {
+      bool is_custom = true;
+      for (auto *pass : tech->getPasses()) {
+        if (!(pass->hasVertexProgram() && pass->hasFragmentProgram())) {
+          is_custom = false;
+          break;
+        }
+      }
+      if (is_custom) {
+        return tech;
+      }
+    }
+  }
 
   if (!shaderGenerator_->hasRenderState(scheme_name)) {
     return nullptr;
@@ -504,6 +522,47 @@ void OgreRTShaderSystem::GenerateShaders(OgreSubMesh *subMesh)
 
   for (unsigned int s = 0; s < this->dataPtr->scenes.size(); s++)
   {
+#ifdef __QNX__
+    // Don't generate a shader for this scheme if we have a shader for the default
+    // scheme.
+    for (auto *tech : material->Material()->getSupportedTechniques()) {
+      if ((tech->getSchemeName() == Ogre::MaterialManager::DEFAULT_SCHEME_NAME)
+        && (tech->getNumPasses() > 0)) {
+        bool is_custom = true;
+        for (auto *pass : tech->getPasses()) {
+          if (!(pass->hasVertexProgram() && pass->hasFragmentProgram())) {
+            is_custom = false;
+            break;
+          }
+        }
+        if (is_custom) {
+          success = true;
+          break;
+        }
+      }
+    }
+
+    if (!success) {
+      try
+      {
+        success = this->dataPtr->shaderGenerator->createShaderBasedTechnique(
+#if OGRE_VERSION_LT_1_11_0
+        curMaterialName,
+#else
+          *material->Material(),
+#endif
+          Ogre::MaterialManager::DEFAULT_SCHEME_NAME,
+          this->dataPtr->scenes[s]->Name() +
+          Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
+      }
+      catch(const Ogre::Exception &e)
+      {
+        gzerr << "Unable to create shader technique for material["
+          << curMaterialName << "]\n";
+        success = false;
+      }
+    }
+#else
     try
     {
       success = this->dataPtr->shaderGenerator->createShaderBasedTechnique(
@@ -522,6 +581,7 @@ void OgreRTShaderSystem::GenerateShaders(OgreSubMesh *subMesh)
         << curMaterialName << "]\n";
       success = false;
     }
+#endif
 
     // Setup custom shader sub render states according to current setup.
     if (success)
