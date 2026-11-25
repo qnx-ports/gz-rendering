@@ -65,7 +65,23 @@ Ogre::Technique *OgreRenderTargetMaterial::handleSchemeNotFound(
   if (_schemeName == this->schemeName)
   {
     // not using getBestTechnique() because it leads to infinite recursion here
+#ifdef __QNX__
+    auto *tech = this->material->getSupportedTechnique(0);
+    if (tech->getNumPasses() > 0) {
+      bool is_custom = true;
+      for (auto *pass : tech->getPasses()) {
+        if (!(pass->hasVertexProgram() && pass->hasFragmentProgram())) {
+          is_custom = false;
+          break;
+        }
+      }
+      if (is_custom) {
+        return tech;
+      }
+    }
+#else
     return this->material->getSupportedTechnique(0);
+#endif
   }
   return nullptr;
 }

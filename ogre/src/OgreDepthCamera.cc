@@ -394,7 +394,7 @@ void OgreDepthCamera::UpdateRenderTarget(OgreRenderTexturePtr _target,
   // Need this line to render the ground plane. No idea why it's necessary.
   renderSys->_setViewport(vp);
 #ifdef __QNX__
-  sceneMgr->_setPass(pass, true);
+  sceneMgr->_setPass(pass, false);
 #else
   sceneMgr->_setPass(pass, true, false);
 #endif
@@ -423,19 +423,25 @@ void OgreDepthCamera::UpdateRenderTarget(OgreRenderTexturePtr _target,
   if (pass->hasVertexProgram())
   {
     renderSys->bindGpuProgram(
-    pass->getVertexProgram()->_getBindingDelegate());
+      pass->getVertexProgram()->_getBindingDelegate());
+  }
 
+  if (pass->hasFragmentProgram())
+  {
+    renderSys->bindGpuProgram(
+      pass->getFragmentProgram()->_getBindingDelegate());
+  }
+
+  if (pass->hasVertexProgram())
+  {
     renderSys->bindGpuProgramParameters(Ogre::GPT_VERTEX_PROGRAM,
       pass->getVertexProgramParameters(), 1);
   }
 
   if (pass->hasFragmentProgram())
   {
-    renderSys->bindGpuProgram(
-    pass->getFragmentProgram()->_getBindingDelegate());
-
     renderSys->bindGpuProgramParameters(Ogre::GPT_FRAGMENT_PROGRAM,
-    pass->getFragmentProgramParameters(), 1);
+      pass->getFragmentProgramParameters(), 1);
   }
 }
 
